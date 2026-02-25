@@ -1,0 +1,11 @@
+{
+  "db": {
+    "host": "test-mysql.anytrek.app",
+    "user": "zhangbiqiong",
+    "password": "Zbq20240614",
+    "database": "zbqdemo"
+  },
+  "server": {
+    "port": 3000
+  }
+}

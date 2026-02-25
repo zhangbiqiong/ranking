@@ -1,18 +1,15 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const fs = require('fs');
 
-const dbConfig = {
-  host: 'test-mysql.anytrek.app',
-  user: 'zhangbiqiong',
-  password: 'Zbq20240614',
-  database: 'zbqdemo'
-};
+const isProduction = process.argv.includes('--prod') || process.env.NODE_ENV === 'production';
+const configFile = isProduction ? 'config.prod.json' : 'config.json';
+const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+const dbConfig = config.db;
+const PORT = config.server.port;
 
 const app = express();
-const PORT = 3000;
-
-app.use(express.json());
 app.use(express.static('public'));
 
 async function getStatistics(year) {
@@ -52,6 +49,7 @@ async function getStatistics(year) {
       result.push({
         studentName: row.studentName,
         className: row.class,
+        score: row.score,
         class_ranking: classRankingMap[row.studentName][row.class],
         total_ranking: totalRankingMap.get(row.studentName)
       });

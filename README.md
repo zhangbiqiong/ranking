@@ -10,38 +10,146 @@
 ├── server.js           # Express 后端服务
 ├── public/
 │   └── index.html     # Vue 3 前端页面
-├── test.js    # 测试脚本
-├── README.md # 项目文档
+├── config.json        # 开发环境配置
+├── config.prod.json   # 生产环境配置
+├── start.sh          # 启动脚本
+├── test.js           # 测试脚本
+├── README.md         # 项目文档
 ├── package.json
 └── node_modules/
 ```
 
+## 配置说明
+
+### 开发环境配置 (config.json)
+
+```json
+{
+  "db": {
+    "host": "your-mysql-host",
+    "user": "your-username",
+    "password": "your-password",
+    "database": "your-database"
+  },
+  "server": {
+    "port": 3000
+  }
+}
+```
+
+### 生产环境配置 (config.prod.json)
+
+生产环境已内置在打包文件中，包含数据库连接信息。
+
+### 配置项说明
+
+| 配置项 | 说明 |
+|--------|------|
+| db.host | MySQL 数据库地址 |
+| db.user | 数据库用户名 |
+| db.password | 数据库密码 |
+| db.database | 数据库名称 |
+| server.port | 服务端口，默认 3000 |
+
+---
+
 ## 快速开始
 
-### 1. 安装依赖
+### 开发环境
 
 ```bash
+# 1. 安装依赖
 npm install
+
+# 2. 修改配置
+vim config.json
+
+# 3. 启动服务
+npm start
 ```
 
-### 2. 启动服务
+### 生产环境
 
 ```bash
-node server.js
+# 1. 解压
+tar -xzvf ranking-system.tar.gz
+
+# 2. 启动（使用 pm2 管理）
+pm2 start server.js --name ranking -- --prod
 ```
 
-服务启动后，访问 http://localhost:3000
+---
 
-### 3. 访问系统
+## 打包说明
 
-打开浏览器访问 http://localhost:3000 ，选择年份即可查看成绩排名。
+### 打包命令
+
+```bash
+tar -czvf ranking-system.tar.gz \
+  --exclude='*.log' \
+  --exclude='.DS_Store' \
+  server.js config.prod.json public/ start.sh test.js \
+  package.json package-lock.json node_modules/
+```
+
+### 打包产物
+
+- `ranking-system.tar.gz` - 包含所有依赖的压缩包（约 3.4MB）
+
+### 使用打包产物
+
+解压后使用 pm2 启动：
+
+```bash
+tar -xzvf ranking-system.tar.gz
+pm2 start server.js --name ranking -- --prod
+```
+
+---
+
+## PM2 管理命令
+
+```bash
+# 启动
+pm2 start server.js --name ranking -- --prod
+
+# 查看状态
+pm2 status
+
+# 查看日志
+pm2 logs ranking
+
+# 重启
+pm2 restart ranking
+
+# 停止
+pm2 stop ranking
+
+# 删除
+pm2 delete ranking
+```
+
+---
+
+## 开发命令
+
+| 命令 | 说明 |
+|------|------|
+| `npm install` | 安装依赖 |
+| `npm start` | 启动开发服务 |
+| `npm run start:prod` | 使用生产配置启动 |
+| `npm test` | 运行测试 |
+
+---
 
 ## 功能特性
 
 ### Web 界面
-- 年份选择下拉框
-- 班级筛选按钮（全部、classA-classG）
-- 成绩排名表格展示
+- 左右布局：左侧年份导航，右侧统计内容
+- 年份选择：点击左侧年份切换，按年份降序排列
+- 班级筛选：全部、classA-classG
+- 成绩展示：显示学生成绩，按分数颜色区分（高分区/及格/不及格）
+- 统计摘要：总人数、班级数、平均分
 - 总排名前三名高亮显示（金、银、铜色）
 - 加载状态和错误提示
 
@@ -57,9 +165,10 @@ GET /api/years
 GET /api/statistics/:year
 ```
 
+---
+
 ## 数据说明
 
-- **数据库**: test-mysql.anytrek.app
 - **表**: ranking
 - **字段**: id, studentName, score, class, year
 - **班级**: classA - classG（7个班级）
@@ -76,6 +185,7 @@ GET /api/statistics/:year
     {
       "studentName": "张伟",
       "className": "classA",
+      "score": 85,
       "class_ranking": 1,
       "total_ranking": 1
     }
@@ -91,20 +201,11 @@ GET /api/statistics/:year
 | statistics | array | 统计结果数组 |
 | studentName | string | 学生姓名 |
 | className | string | 所属班级 |
+| score | number | 成绩（0-100） |
 | class_ranking | number | 班级排名（1-10） |
 | total_ranking | number | 总排名（1-70） |
 
-## 运行测试
-
-```bash
-node test.js
-```
-
-测试内容包括：
-- 数据库连接验证
-- 统计数据格式验证
-- 排名准确性验证
-- 字段完整性验证
+---
 
 ## API 接口示例
 

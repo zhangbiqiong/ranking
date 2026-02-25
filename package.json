@@ -1,16 +1,23 @@
 {
-  "name": "demo0205",
+  "name": "ranking-system",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "学生成绩排名统计系统",
+  "main": "server.js",
+  "bin": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "start:prod": "node server.js --prod",
+    "test": "node test.js",
+    "build": "pkg . --targets node18-linux-x64 --output ranking-system"
   },
-  "keywords": [],
+  "keywords": ["ranking", "statistics", "education"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^5.2.1",
     "mysql2": "^3.18.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
   }
 }

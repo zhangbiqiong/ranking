@@ -24,7 +24,6 @@
       --rank-silver: #a8b4c4;
       --rank-bronze: #c4825a;
       --shadow-luxury: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
     }
 
     * {
@@ -39,7 +38,6 @@
       min-height: 100vh;
       color: var(--text-primary);
       position: relative;
-      overflow-x: hidden;
     }
 
     body::before {
@@ -57,269 +55,145 @@
       z-index: 0;
     }
 
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.03;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 40px 24px 60px;
+    .app-container {
+      display: flex;
+      min-height: 100vh;
       position: relative;
       z-index: 1;
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 48px;
-      animation: fadeSlideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    @keyframes fadeSlideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .overline {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent-gold);
-      margin-bottom: 12px;
-      opacity: 0.9;
-    }
-
-    h1 {
-      font-family: 'Noto Serif SC', serif;
-      font-size: clamp(1.8rem, 5vw, 2.8rem);
-      font-weight: 600;
-      color: var(--text-primary);
-      letter-spacing: 0.02em;
-      position: relative;
-      display: inline-block;
-    }
-
-    h1::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
-    }
-
-    .search-panel {
+    /* 左侧边栏 */
+    .sidebar {
+      width: 280px;
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 28px 32px;
-      margin-bottom: 32px;
-      box-shadow: var(--shadow-luxury);
-      position: relative;
-      overflow: hidden;
-      animation: fadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-      opacity: 0;
-    }
-
-    @keyframes fadeSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .search-panel::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
-      opacity: 0.5;
-    }
-
-    .search-panel::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 200px;
-      height: 200px;
-      background: radial-gradient(circle, rgba(212, 168, 83, 0.05) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .search-row {
+      border-right: 1px solid var(--border-subtle);
+      padding: 24px 0;
       display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
+      flex-direction: column;
     }
 
-    .search-row label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-    }
-
-    .search-row select {
-      flex: 1;
-      min-width: 180px;
-      max-width: 240px;
-      padding: 14px 18px;
-      background: var(--bg-deep);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      cursor: pointer;
-      outline: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-    }
-
-    .search-row select:hover {
-      border-color: var(--border-accent);
-    }
-
-    .search-row select:focus {
-      border-color: var(--accent-gold);
-      box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
-    }
-
-    .search-row select option {
-      background: var(--bg-card);
-      color: var(--text-primary);
-      padding: 12px;
-    }
-
-    .btn-query {
-      padding: 14px 32px;
-      background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-copper) 100%);
-      color: #0a0f1a;
-      border: none;
-      border-radius: 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-query::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .btn-query:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
-    }
-
-    .btn-query:hover::before {
-      left: 100%;
-    }
-
-    .results-panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--shadow-luxury);
-      animation: fadeIn 0.5s ease forwards;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .results-header {
-      padding: 24px 32px;
-      background: linear-gradient(135deg, rgba(212, 168, 83, 0.08) 0%, transparent 100%);
+    .sidebar-header {
+      padding: 0 24px 24px;
       border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
+      margin-bottom: 16px;
     }
 
-    .results-title {
+    .sidebar-title {
       font-family: 'Noto Serif SC', serif;
       font-size: 1.25rem;
       font-weight: 600;
       color: var(--text-primary);
+      margin-bottom: 8px;
     }
 
-    .stats-badges {
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .year-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .year-item {
+      padding: 16px 24px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      border-left: 3px solid transparent;
       display: flex;
-      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .stat-badge {
+    .year-item:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .year-item.active {
+      background: rgba(212, 168, 83, 0.1);
+      border-left-color: var(--accent-gold);
+    }
+
+    .year-item .year-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .year-item.active .year-label {
+      color: var(--accent-gold);
+    }
+
+    .year-item .year-arrow {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      color: var(--accent-gold);
+    }
+
+    .year-item.active .year-arrow {
+      opacity: 1;
+    }
+
+    /* 右侧内容 */
+    .main-content {
+      flex: 1;
+      padding: 32px 40px;
+      overflow-y: auto;
+    }
+
+    .content-header {
+      margin-bottom: 32px;
+    }
+
+    .content-title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .content-title::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-gold), transparent);
+      margin-top: 12px;
+    }
+
+    .stats-summary {
+      display: flex;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .stat-item {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      font-size: 13px;
-      color: var(--text-secondary);
+      gap: 8px;
     }
 
-    .stat-badge .number {
-      font-weight: 600;
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .stat-value {
       color: var(--accent-gold);
+      font-weight: 600;
       font-family: 'JetBrains Mono', monospace;
     }
 
+    /* 班级筛选 */
     .class-filters {
-      padding: 20px 32px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      border-bottom: 1px solid var(--border-subtle);
-      background: rgba(0, 0, 0, 0.15);
+      margin-bottom: 24px;
     }
 
     .filter-btn {
@@ -332,7 +206,7 @@
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.25s ease;
     }
 
     .filter-btn:hover {
@@ -346,14 +220,17 @@
       color: #0a0f1a;
     }
 
+    /* 表格 */
     .table-container {
-      overflow-x: auto;
+      background: var(--bg-card);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
     }
 
     thead {
@@ -361,20 +238,29 @@
     }
 
     th {
-      padding: 16px 24px;
+      padding: 14px 20px;
       text-align: left;
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       color: var(--text-muted);
       border-bottom: 1px solid var(--border-subtle);
     }
 
+    th:first-child {
+      width: 80px;
+    }
+
+    th:nth-child(4),
+    th:nth-child(5) {
+      width: 100px;
+      text-align: center;
+    }
+
     td {
-      padding: 18px 24px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--border-subtle);
-      transition: background 0.2s;
     }
 
     tr:last-child td {
@@ -382,42 +268,32 @@
     }
 
     tbody tr {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: background 0.2s;
     }
 
     tbody tr:hover {
       background: var(--bg-card-hover);
     }
 
-    .rank-cell {
-      width: 80px;
-    }
-
     .rank-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-secondary);
       border: 1px solid var(--border-subtle);
-      transition: all 0.3s;
-    }
-
-    tr:hover .rank-badge {
-      transform: scale(1.1);
     }
 
     .rank-badge.gold {
       background: linear-gradient(135deg, var(--rank-gold) 0%, #b8923d 100%);
       color: #0a0f1a;
       border-color: var(--rank-gold);
-      box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
     }
 
     .rank-badge.silver {
@@ -435,29 +311,64 @@
     .student-name {
       font-weight: 500;
       color: var(--text-primary);
-      font-size: 15px;
     }
 
     .class-cell {
-      font-size: 13px;
       color: var(--text-secondary);
+      font-size: 13px;
     }
 
-    .class-rank-cell {
+    .score-cell {
+      text-align: center;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .score-high {
+      color: #4ade80;
+    }
+
+    .score-mid {
+      color: var(--accent-gold);
+    }
+
+    .score-low {
+      color: #f87171;
+    }
+
+    .ranking-cell {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
       color: var(--text-muted);
     }
 
-    .loading-state,
-    .error-state,
+    /* 空状态 */
     .empty-state {
       text-align: center;
-      padding: 60px 24px;
+      padding: 80px 40px;
       color: var(--text-muted);
     }
 
-    .loading-state .spinner {
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .empty-state p {
+      font-size: 15px;
+    }
+
+    /* 加载状态 */
+    .loading-state {
+      text-align: center;
+      padding: 60px 40px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
       width: 40px;
       height: 40px;
       border: 2px solid var(--border-subtle);
@@ -471,180 +382,179 @@
       to { transform: rotate(360deg); }
     }
 
-    .error-state {
-      color: #ef4444;
-    }
-
-    .initial-state {
-      text-align: center;
-      padding: 80px 24px;
-      color: var(--text-muted);
-    }
-
-    .initial-state svg {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 20px;
-      opacity: 0.3;
-    }
-
-    .initial-state p {
-      font-size: 15px;
-    }
-
-    .row-animate {
-      animation: rowSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
-    }
-
-    @keyframes rowSlideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    @media (max-width: 640px) {
-      .container {
-        padding: 24px 16px 40px;
-      }
-
-      .search-panel {
-        padding: 20px;
-      }
-
-      .search-row {
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .app-container {
         flex-direction: column;
-        align-items: stretch;
       }
 
-      .search-row select {
-        max-width: none;
-      }
-
-      .btn-query {
+      .sidebar {
         width: 100%;
+        flex-direction: row;
+        align-items: center;
+        padding: 16px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
       }
 
-      .results-header {
-        padding: 20px;
+      .sidebar-header {
+        padding: 0;
+        margin-bottom: 0;
+        margin-right: 24px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-subtle);
+        padding-right: 24px;
       }
 
-      .stats-badges {
-        width: 100%;
-        justify-content: flex-start;
+      .sidebar-title {
+        font-size: 1rem;
+        margin-bottom: 0;
       }
 
-      .class-filters {
-        padding: 16px 20px;
+      .sidebar-subtitle {
+        display: none;
       }
 
-      th, td {
-        padding: 14px 16px;
+      .year-list {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+      }
+
+      .year-item {
+        padding: 8px 16px;
+        border-left: none;
+        border-radius: 20px;
+        white-space: nowrap;
+        border: 1px solid var(--border-subtle);
+      }
+
+      .year-item.active {
+        border-left: none;
+        border-color: var(--accent-gold);
+      }
+
+      .year-item .year-arrow {
+        display: none;
+      }
+
+      .main-content {
+        padding: 24px 16px;
       }
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="container">
-      <header>
-        <div class="overline">Academic Rankings</div>
-        <h1>学生成绩排名统计</h1>
-      </header>
-
-      <div class="search-panel">
-        <div class="search-row">
-          <label for="yearSelect">选择学年</label>
-          <select id="yearSelect" v-model="selectedYear" @change="search">
-            <option value="">请选择年份</option>
-            <option v-for="year in years" :key="year" :value="year">{{ year }} 学年</option>
-          </select>
-          <button class="btn-query" @click="search">查询成绩</button>
+    <div class="app-container">
+      <!-- 左侧边栏 -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">成绩统计</div>
+          <div class="sidebar-subtitle">Academic Rankings</div>
         </div>
-      </div>
-
-      <div class="initial-state" v-if="!showResults">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-        </svg>
-        <p>请选择年份以查看学生排名</p>
-      </div>
-
-      <div class="results-panel" v-if="showResults">
-        <div class="results-header">
-          <div class="results-title">{{ selectedYear }} 学年成绩排名</div>
-          <div class="stats-badges">
-            <div class="stat-badge">
-              <span>总人数</span>
-              <span class="number">{{ displayData.length }}</span>
-            </div>
-            <div class="stat-badge">
-              <span>班级数</span>
-              <span class="number">{{ classCount }}</span>
-            </div>
+        <div class="year-list">
+          <div 
+            v-for="year in years" 
+            :key="year"
+            class="year-item"
+            :class="{ active: selectedYear === year }"
+            @click="selectYear(year)"
+          >
+            <span class="year-label">{{ year }} 学年</span>
+            <span class="year-arrow">›</span>
           </div>
         </div>
-        <div class="class-filters">
-          <button 
-            class="filter-btn" 
-            :class="{ active: currentClass === null }"
-            @click="currentClass = null"
-          >全部</button>
-          <button 
-            v-for="cls in classes" 
-            :key="cls"
-            class="filter-btn"
-            :class="{ active: currentClass === cls }"
-            @click="currentClass = cls"
-          >{{ cls }}</button>
+      </aside>
+
+      <!-- 右侧内容 -->
+      <main class="main-content">
+        <template v-if="selectedYear">
+          <div class="content-header">
+            <h1 class="content-title">{{ selectedYear }} 学年成绩排名</h1>
+            <div class="stats-summary">
+              <div class="stat-item">
+                <span class="stat-label">总人数</span>
+                <span class="stat-value">{{ displayData.length }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">班级数</span>
+                <span class="stat-value">{{ classCount }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">平均分</span>
+                <span class="stat-value">{{ averageScore }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="class-filters">
+            <button 
+              class="filter-btn" 
+              :class="{ active: currentClass === null }"
+              @click="currentClass = null"
+            >全部</button>
+            <button 
+              v-for="cls in classes" 
+              :key="cls"
+              class="filter-btn"
+              :class="{ active: currentClass === cls }"
+              @click="currentClass = cls"
+            >{{ cls }}</button>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>学生姓名</th>
+                  <th>班级</th>
+                  <th>成绩</th>
+                  <th>班级排名</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="loading">
+                  <td colspan="5">
+                    <div class="loading-state">
+                      <div class="spinner"></div>
+                      <div>加载中...</div>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-else-if="error">
+                  <td colspan="5">
+                    <div class="loading-state" style="color: #ef4444;">{{ error }}</div>
+                  </td>
+                </tr>
+                <tr 
+                  v-else 
+                  v-for="item in displayData" 
+                  :key="item.studentName + item.className"
+                >
+                  <td>
+                    <span class="rank-badge" :class="getRankClass(item.total_ranking)">
+                      {{ item.total_ranking }}
+                    </span>
+                  </td>
+                  <td class="student-name">{{ item.studentName }}</td>
+                  <td class="class-cell">{{ item.className }}</td>
+                  <td class="score-cell" :class="getScoreClass(item.score)">{{ item.score }}</td>
+                  <td class="ranking-cell">#{{ item.class_ranking }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <div v-else class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <p>请选择左侧学年查看成绩排名</p>
         </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th class="rank-cell">总排名</th>
-                <th>学生姓名</th>
-                <th>班级</th>
-                <th>班级排名</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading">
-                <td colspan="4">
-                  <div class="loading-state">
-                    <div class="spinner"></div>
-                    <div>加载中...</div>
-                  </div>
-                </td>
-              </tr>
-              <tr v-else-if="error">
-                <td colspan="4">
-                  <div class="error-state">{{ error }}</div>
-                </td>
-              </tr>
-              <tr 
-                v-else 
-                v-for="(item, index) in displayData" 
-                :key="item.studentName + item.className"
-                class="row-animate"
-                :style="{ animationDelay: index * 0.03 + 's' }"
-              >
-                <td class="rank-cell">
-                  <span class="rank-badge" :class="getRankClass(item.total_ranking)">{{ item.total_ranking }}</span>
-                </td>
-                <td class="student-name">{{ item.studentName }}</td>
-                <td class="class-cell">{{ item.className }}</td>
-                <td class="class-rank-cell">#{{ item.class_ranking }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </main>
     </div>
   </div>
 
@@ -657,17 +567,22 @@
         const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG'];
         
         const years = ref([]);
-        const selectedYear = ref('');
+        const selectedYear = ref(null);
         const currentData = ref(null);
         const currentClass = ref(null);
         const loading = ref(false);
         const error = ref('');
-        const showResults = ref(false);
 
         const classCount = computed(() => {
           if (!currentData.value) return 0;
           const classSet = new Set(currentData.value.statistics.map(s => s.className));
           return classSet.size;
+        });
+
+        const averageScore = computed(() => {
+          if (!currentData.value || currentData.value.statistics.length === 0) return 0;
+          const total = currentData.value.statistics.reduce((sum, s) => sum + s.score, 0);
+          return Math.round(total / currentData.value.statistics.length);
         });
 
         const displayData = computed(() => {
@@ -681,25 +596,21 @@
         async function loadYears() {
           try {
             const response = await fetch('/api/years');
-            years.value = await response.json();
+            const data = await response.json();
+            years.value = data.sort((a, b) => b - a);
           } catch (e) {
             console.error('加载年份失败:', e);
           }
         }
 
-        async function search() {
-          if (!selectedYear.value) {
-            alert('请选择年份');
-            return;
-          }
-
+        async function selectYear(year) {
+          selectedYear.value = year;
           loading.value = true;
           error.value = '';
-          showResults.value = true;
           currentClass.value = null;
 
           try {
-            const response = await fetch(`/api/statistics/${selectedYear.value}`);
+            const response = await fetch(`/api/statistics/${year}`);
             const data = await response.json();
             
             if (data.error) {
@@ -721,6 +632,12 @@
           return '';
         }
 
+        function getScoreClass(score) {
+          if (score >= 90) return 'score-high';
+          if (score >= 60) return 'score-mid';
+          return 'score-low';
+        }
+
         loadYears();
 
         return {
@@ -730,11 +647,12 @@
           currentClass,
           loading,
           error,
-          showResults,
           classCount,
+          averageScore,
           displayData,
-          search,
-          getRankClass
+          selectYear,
+          getRankClass,
+          getScoreClass
         };
       }
     }).mount('#app');

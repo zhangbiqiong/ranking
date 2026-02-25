@@ -13,7 +13,30 @@ node test.js        # Run all tests (creates table, inserts data, verifies resul
 
 ### Running the Application
 ```bash
-node server.js              # Start Express server (default port: 3000)
+npm start              # Start Express server (default port: 3000)
+npm run start:prod    # Start with production config
+```
+
+### Building for Production
+```bash
+# Create tarball (includes node_modules)
+tar -czvf ranking-system.tar.gz \
+  --exclude='*.log' \
+  --exclude='.DS_Store' \
+  server.js config.prod.json public/ start.sh test.js \
+  package.json package-lock.json node_modules/
+```
+
+### PM2 Commands (Production)
+```bash
+# Start with pm2
+pm2 start server.js --name ranking -- --prod
+
+# Other commands
+pm2 status
+pm2 logs ranking
+pm2 restart ranking
+pm2 stop ranking
 ```
 
 ### Dependencies
@@ -47,7 +70,7 @@ const [rows] = await connection.execute(query, params);
 ### Naming Conventions
 - **Variables/Functions**: camelCase (e.g., `getStatistics`, `classRankingMap`)
 - **Constants**: camelCase or UPPER_SNAKE_CASE for configuration
-- **Files**: camelCase (e.g., `server.js`, `test_ranking.js`)
+- **Files**: camelCase (e.g., `server.js`, `test.js`)
 - **API Endpoints**: RESTful, lowercase with hyphens
 **: lowercase (- **Database tablese.g., `ranking`)
 - **Database columns**: camelCase (e.g., `studentName`, `className`)
@@ -75,9 +98,13 @@ res.status(500).json({ error: error.message });
 ### Project Structure
 ```
 ├── server.js              # Express backend server
+├── config.json            # Development config
+├── config.prod.json       # Production config
 ├── public/
 │   └── index.html         # Vue 3 frontend
-├── test_ranking.js        # Test script with verification
+├── test.js                # Test script with verification
+├── start.sh               # Start script
+├── README.md              # Project documentation
 ├── package.json
 └── node_modules/
 ```
@@ -94,14 +121,32 @@ CREATE TABLE ranking (
 ```
 
 ### Configuration
-Database configuration should be stored in a config object at the top of the file:
+Two configuration files:
+- `config.json` - Development environment
+- `config.prod.json` - Production environment (used for packaged executable)
+
+```json
+{
+  "db": {
+    "host": "test-mysql.anytrek.app",
+    "user": "zhangbiqiong",
+    "password": "Zbq20240614",
+    "database": "zbqdemo"
+  },
+  "server": {
+    "port": 3000
+  }
+}
+```
+
+Load configuration in server.js:
 ```javascript
-const dbConfig = {
-  host: 'test-mysql.anytrek.app',
-  user: 'zhangbiqiong',
-  password: 'Zbq20240614',
-  database: 'zbqdemo'
-};
+const fs = require('fs');
+const isProduction = process.argv.includes('--prod') || process.env.NODE_ENV === 'production';
+const configFile = isProduction ? 'config.prod.json' : 'config.json';
+const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+const dbConfig = config.db;
+const PORT = config.server.port;
 ```
 
 ### REST API Design
