@@ -2,17 +2,16 @@
 
 ## 项目介绍
 
-这是一个基于 Node.js + Express 的学生成绩排名统计系统，提供 Web 页面展示和 REST API 接口。
+这是一个基于 Node.js + Express + Vue 3 的学生成绩排名统计系统，提供 Web 页面展示和 REST API 接口。
 
 ## 项目结构
 
 ```
 ├── server.js           # Express 后端服务
 ├── public/
-│   └── index.html     # 前端页面
+│   └── index.html     # Vue 3 前端页面
 ├── test_ranking.js    # 测试脚本
-├── ranking_statistics.js  # 命令行版本（保留）
-├── ranking_statistics.md # 命令行版本文档
+├── ranking_statistics.md # 项目文档
 ├── package.json
 └── node_modules/
 ```
@@ -41,9 +40,10 @@ node server.js
 
 ### Web 界面
 - 年份选择下拉框
-- 班级筛选按钮
+- 班级筛选按钮（全部、classA-classG）
 - 成绩排名表格展示
-- 总排名前三名高亮显示
+- 总排名前三名高亮显示（金、银、铜色）
+- 加载状态和错误提示
 
 ### REST API
 
@@ -57,12 +57,6 @@ GET /api/years
 GET /api/statistics/:year
 ```
 
-### 命令行版本
-
-```bash
-node ranking_statistics.js 2024
-```
-
 ## 数据说明
 
 - **数据库**: test-mysql.anytrek.app
@@ -71,6 +65,7 @@ node ranking_statistics.js 2024
 - **班级**: classA - classG（7个班级）
 - **每班人数**: 10人
 - **年份**: 2023-2026
+- **每年数据**: 70条
 
 ## 返回格式
 
@@ -87,6 +82,17 @@ node ranking_statistics.js 2024
   ]
 }
 ```
+
+### 字段说明
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| year | number | 年份 |
+| statistics | array | 统计结果数组 |
+| studentName | string | 学生姓名 |
+| className | string | 所属班级 |
+| class_ranking | number | 班级排名（1-10） |
+| total_ranking | number | 总排名（1-70） |
 
 ## 运行测试
 

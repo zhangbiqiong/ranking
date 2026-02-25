@@ -264,7 +264,6 @@
       border-radius: 16px;
       overflow: hidden;
       box-shadow: var(--shadow-luxury);
-      display: none;
       animation: fadeIn 0.5s ease forwards;
     }
 
@@ -551,200 +550,194 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="overline">Academic Rankings</div>
-      <h1>学生成绩排名统计</h1>
-    </header>
+  <div id="app">
+    <div class="container">
+      <header>
+        <div class="overline">Academic Rankings</div>
+        <h1>学生成绩排名统计</h1>
+      </header>
 
-    <div class="search-panel">
-      <div class="search-row">
-        <label for="yearSelect">选择学年</label>
-        <select id="yearSelect">
-          <option value="">请选择年份</option>
-        </select>
-        <button class="btn-query" onclick="search()">查询成绩</button>
-      </div>
-    </div>
-
-    <div class="initial-state" id="initialState">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-      </svg>
-      <p>请选择年份以查看学生排名</p>
-    </div>
-
-    <div class="results-panel" id="results">
-      <div class="results-header">
-        <div class="results-title" id="resultsHeader">统计结果</div>
-        <div class="stats-badges">
-          <div class="stat-badge">
-            <span>总人数</span>
-            <span class="number" id="totalStudents">0</span>
-          </div>
-          <div class="stat-badge">
-            <span>班级数</span>
-            <span class="number" id="totalClasses">0</span>
-          </div>
+      <div class="search-panel">
+        <div class="search-row">
+          <label for="yearSelect">选择学年</label>
+          <select id="yearSelect" v-model="selectedYear" @change="search">
+            <option value="">请选择年份</option>
+            <option v-for="year in years" :key="year" :value="year">{{ year }} 学年</option>
+          </select>
+          <button class="btn-query" @click="search">查询成绩</button>
         </div>
       </div>
-      <div class="class-filters" id="classFilter"></div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th class="rank-cell">总排名</th>
-              <th>学生姓名</th>
-              <th>班级</th>
-              <th>班级排名</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-          </tbody>
-        </table>
+
+      <div class="initial-state" v-if="!showResults">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        <p>请选择年份以查看学生排名</p>
+      </div>
+
+      <div class="results-panel" v-if="showResults">
+        <div class="results-header">
+          <div class="results-title">{{ selectedYear }} 学年成绩排名</div>
+          <div class="stats-badges">
+            <div class="stat-badge">
+              <span>总人数</span>
+              <span class="number">{{ displayData.length }}</span>
+            </div>
+            <div class="stat-badge">
+              <span>班级数</span>
+              <span class="number">{{ classCount }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="class-filters">
+          <button 
+            class="filter-btn" 
+            :class="{ active: currentClass === null }"
+            @click="currentClass = null"
+          >全部</button>
+          <button 
+            v-for="cls in classes" 
+            :key="cls"
+            class="filter-btn"
+            :class="{ active: currentClass === cls }"
+            @click="currentClass = cls"
+          >{{ cls }}</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="rank-cell">总排名</th>
+                <th>学生姓名</th>
+                <th>班级</th>
+                <th>班级排名</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="4">
+                  <div class="loading-state">
+                    <div class="spinner"></div>
+                    <div>加载中...</div>
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="error">
+                <td colspan="4">
+                  <div class="error-state">{{ error }}</div>
+                </td>
+              </tr>
+              <tr 
+                v-else 
+                v-for="(item, index) in displayData" 
+                :key="item.studentName + item.className"
+                class="row-animate"
+                :style="{ animationDelay: index * 0.03 + 's' }"
+              >
+                <td class="rank-cell">
+                  <span class="rank-badge" :class="getRankClass(item.total_ranking)">{{ item.total_ranking }}</span>
+                </td>
+                <td class="student-name">{{ item.studentName }}</td>
+                <td class="class-cell">{{ item.className }}</td>
+                <td class="class-rank-cell">#{{ item.class_ranking }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script>
-    const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG'];
-    let currentData = null;
-    let currentClass = null;
+    const { createApp, ref, computed } = Vue;
 
-    async function loadYears() {
-      try {
-        const response = await fetch('/api/years');
-        const years = await response.json();
-        const select = document.getElementById('yearSelect');
-        years.forEach(year => {
-          const option = document.createElement('option');
-          option.value = year;
-          option.textContent = year + ' 学年';
-          select.appendChild(option);
-        });
-      } catch (error) {
-        console.error('加载年份失败:', error);
-      }
-    }
-
-    async function search() {
-      const year = document.getElementById('yearSelect').value;
-      if (!year) {
-        alert('请选择年份');
-        return;
-      }
-
-      const initialState = document.getElementById('initialState');
-      const results = document.getElementById('results');
-      const tableBody = document.getElementById('tableBody');
-      
-      initialState.style.display = 'none';
-      results.style.display = 'block';
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="4">
-            <div class="loading-state">
-              <div class="spinner"></div>
-              <div>加载中...</div>
-            </div>
-          </td>
-        </tr>`;
-
-      try {
-        const response = await fetch(`/api/statistics/${year}`);
-        const data = await response.json();
+    createApp({
+      setup() {
+        const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG'];
         
-        if (data.error) {
-          tableBody.innerHTML = `
-            <tr>
-              <td colspan="4">
-                <div class="error-state">${data.error}</div>
-              </td>
-            </tr>`;
-          return;
+        const years = ref([]);
+        const selectedYear = ref('');
+        const currentData = ref(null);
+        const currentClass = ref(null);
+        const loading = ref(false);
+        const error = ref('');
+        const showResults = ref(false);
+
+        const classCount = computed(() => {
+          if (!currentData.value) return 0;
+          const classSet = new Set(currentData.value.statistics.map(s => s.className));
+          return classSet.size;
+        });
+
+        const displayData = computed(() => {
+          if (!currentData.value) return [];
+          if (currentClass.value === null) {
+            return currentData.value.statistics;
+          }
+          return currentData.value.statistics.filter(s => s.className === currentClass.value);
+        });
+
+        async function loadYears() {
+          try {
+            const response = await fetch('/api/years');
+            years.value = await response.json();
+          } catch (e) {
+            console.error('加载年份失败:', e);
+          }
         }
 
-        currentData = data;
-        currentClass = null;
-        
-        document.getElementById('resultsHeader').textContent = `${year} 学年成绩排名`;
-        document.getElementById('totalStudents').textContent = data.statistics.length;
-        
-        const classSet = new Set(data.statistics.map(s => s.className));
-        document.getElementById('totalClasses').textContent = classSet.size;
+        async function search() {
+          if (!selectedYear.value) {
+            alert('请选择年份');
+            return;
+          }
 
-        renderClassFilter();
-        renderTable(data.statistics);
-      } catch (error) {
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="4">
-              <div class="error-state">请求失败: ${error.message}</div>
-            </td>
-          </tr>`;
-      }
-    }
+          loading.value = true;
+          error.value = '';
+          showResults.value = true;
+          currentClass.value = null;
 
-    function renderClassFilter() {
-      const filter = document.getElementById('classFilter');
-      filter.innerHTML = '';
-      
-      const allBtn = document.createElement('button');
-      allBtn.textContent = '全部';
-      allBtn.className = currentClass === null ? 'active' : '';
-      allBtn.onclick = () => {
-        currentClass = null;
-        renderClassFilter();
-        renderTable(currentData.statistics);
-      };
-      filter.appendChild(allBtn);
+          try {
+            const response = await fetch(`/api/statistics/${selectedYear.value}`);
+            const data = await response.json();
+            
+            if (data.error) {
+              error.value = data.error;
+            } else {
+              currentData.value = data;
+            }
+          } catch (e) {
+            error.value = '请求失败: ' + e.message;
+          } finally {
+            loading.value = false;
+          }
+        }
 
-      classes.forEach(cls => {
-        const btn = document.createElement('button');
-        btn.textContent = cls;
-        btn.className = currentClass === cls ? 'active' : '';
-        btn.onclick = () => {
-          currentClass = cls;
-          renderClassFilter();
-          renderTable(currentData.statistics.filter(s => s.className === cls));
+        function getRankClass(rank) {
+          if (rank === 1) return 'gold';
+          if (rank === 2) return 'silver';
+          if (rank === 3) return 'bronze';
+          return '';
+        }
+
+        loadYears();
+
+        return {
+          classes,
+          years,
+          selectedYear,
+          currentClass,
+          loading,
+          error,
+          showResults,
+          classCount,
+          displayData,
+          search,
+          getRankClass
         };
-        filter.appendChild(btn);
-      });
-    }
-
-    function renderTable(data) {
-      const tableBody = document.getElementById('tableBody');
-      tableBody.innerHTML = '';
-
-      data.forEach((item, index) => {
-        const row = document.createElement('tr');
-        row.className = 'row-animate';
-        row.style.animationDelay = `${index * 0.03}s`;
-        
-        let rankClass = '';
-        if (item.total_ranking === 1) rankClass = 'gold';
-        else if (item.total_ranking === 2) rankClass = 'silver';
-        else if (item.total_ranking === 3) rankClass = 'bronze';
-        
-        row.innerHTML = `
-          <td class="rank-cell">
-            <span class="rank-badge ${rankClass}">${item.total_ranking}</span>
-          </td>
-          <td class="student-name">${item.studentName}</td>
-          <td class="class-cell">${item.className}</td>
-          <td class="class-rank-cell">#${item.class_ranking}</td>
-        `;
-        tableBody.appendChild(row);
-      });
-    }
-
-    loadYears();
-
-    document.getElementById('yearSelect').addEventListener('change', function() {
-      if (this.value) {
-        search();
       }
-    });
+    }).mount('#app');
   </script>
 </body>
 </html>

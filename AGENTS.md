@@ -14,7 +14,6 @@ node test_ranking.js        # Run all tests (creates table, inserts data, verifi
 ### Running the Application
 ```bash
 node server.js              # Start Express server (default port: 3000)
-node ranking_statistics.js 2024  # CLI version - get statistics for a specific year
 ```
 
 ### Dependencies
@@ -48,7 +47,7 @@ const [rows] = await connection.execute(query, params);
 ### Naming Conventions
 - **Variables/Functions**: camelCase (e.g., `getStatistics`, `classRankingMap`)
 - **Constants**: camelCase or UPPER_SNAKE_CASE for configuration
-- **Files**: camelCase (e.g., `ranking_statistics.js`, `server.js`)
+- **Files**: camelCase (e.g., `server.js`, `test_ranking.js`)
 - **API Endpoints**: RESTful, lowercase with hyphens
 **: lowercase (- **Database tablese.g., `ranking`)
 - **Database columns**: camelCase (e.g., `studentName`, `className`)
@@ -76,9 +75,8 @@ res.status(500).json({ error: error.message });
 ### Project Structure
 ```
 ├── server.js              # Express backend server
-├── ranking_statistics.js  # CLI version (standalone)
 ├── public/
-│   └── index.html         # Web frontend
+│   └── index.html         # Vue 3 frontend
 ├── test_ranking.js        # Test script with verification
 ├── package.json
 └── node_modules/
@@ -124,11 +122,6 @@ const dbConfig = {
 - Verify both ranking values and their ranges
 - Test all years (2023-2026)
 - Verify API responses when server is running
-
-### CLI Argument Handling
-- Use `process.argv` to get command line arguments
-- Always validate required parameters
-- Provide helpful error messages for missing arguments
 
 ### Best Practices
 1. Use `connection.execute()` for parameterized queries
