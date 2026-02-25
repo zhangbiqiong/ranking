@@ -8,7 +8,7 @@ This is a Node.js + Express MySQL ranking statistics project with a web frontend
 
 ### Running Tests
 ```bash
-node test_ranking.js        # Run all tests (creates table, inserts data, verifies results)
+node test.js        # Run all tests (creates table, inserts data, verifies results)
 ```
 
 ### Running the Application
