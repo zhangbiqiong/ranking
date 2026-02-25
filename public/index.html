@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学生成绩排名统计</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0a0f1a;
+      --bg-card: #111827;
+      --bg-card-hover: #1a2332;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-gold: #d4a853;
+      --accent-gold-light: #e8c87a;
+      --accent-copper: #c9a66b;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-accent: rgba(212, 168, 83, 0.3);
+      --rank-gold: #d4a853;
+      --rank-silver: #a8b4c4;
+      --rank-bronze: #c4825a;
+      --shadow-luxury: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-deep);
+      min-height: 100vh;
+      color: var(--text-primary);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(212, 168, 83, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(17, 24, 39, 0.9) 0%, transparent 50%),
+        linear-gradient(180deg, #0a0f1a 0%, #0d1420 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeSlideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .overline {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      margin-bottom: 12px;
+      opacity: 0.9;
+    }
+
+    h1 {
+      font-family: 'Noto Serif SC', serif;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+    }
+
+    .search-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-luxury);
+      position: relative;
+      overflow: hidden;
+      animation: fadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .search-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+      opacity: 0.5;
+    }
+
+    .search-panel::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(212, 168, 83, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-row label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .search-row select {
+      flex: 1;
+      min-width: 180px;
+      max-width: 240px;
+      padding: 14px 18px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    .search-row select:hover {
+      border-color: var(--border-accent);
+    }
+
+    .search-row select:focus {
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
+    }
+
+    .search-row select option {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 12px;
+    }
+
+    .btn-query {
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-copper) 100%);
+      color: #0a0f1a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-query::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-query:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
+    }
+
+    .btn-query:hover::before {
+      left: 100%;
+    }
+
+    .results-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-luxury);
+      display: none;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .results-header {
+      padding: 24px 32px;
+      background: linear-gradient(135deg, rgba(212, 168, 83, 0.08) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .results-title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .stats-badges {
+      display: flex;
+      gap: 12px;
+    }
+
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .stat-badge .number {
+      font-weight: 600;
+      color: var(--accent-gold);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .class-filters {
+      padding: 20px 32px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-btn:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-secondary);
+    }
+
+    .filter-btn.active {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      color: #0a0f1a;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    thead {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    th {
+      padding: 16px 24px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    td {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.2s;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .rank-cell {
+      width: 80px;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s;
+    }
+
+    tr:hover .rank-badge {
+      transform: scale(1.1);
+    }
+
+    .rank-badge.gold {
+      background: linear-gradient(135deg, var(--rank-gold) 0%, #b8923d 100%);
+      color: #0a0f1a;
+      border-color: var(--rank-gold);
+      box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
+    }
+
+    .rank-badge.silver {
+      background: linear-gradient(135deg, var(--rank-silver) 0%, #8899ad 100%);
+      color: #0a0f1a;
+      border-color: var(--rank-silver);
+    }
+
+    .rank-badge.bronze {
+      background: linear-gradient(135deg, var(--rank-bronze) 0%, #a66b48 100%);
+      color: #0a0f1a;
+      border-color: var(--rank-bronze);
+    }
+
+    .student-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 15px;
+    }
+
+    .class-cell {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .class-rank-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .loading-state,
+    .error-state,
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+    }
+
+    .loading-state .spinner {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border-subtle);
+      border-top-color: var(--accent-gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-state {
+      color: #ef4444;
+    }
+
+    .initial-state {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--text-muted);
+    }
+
+    .initial-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    .initial-state p {
+      font-size: 15px;
+    }
+
+    .row-animate {
+      animation: rowSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+
+    @keyframes rowSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 24px 16px 40px;
+      }
+
+      .search-panel {
+        padding: 20px;
+      }
+
+      .search-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-row select {
+        max-width: none;
+      }
+
+      .btn-query {
+        width: 100%;
+      }
+
+      .results-header {
+        padding: 20px;
+      }
+
+      .stats-badges {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .class-filters {
+        padding: 16px 20px;
+      }
+
+      th, td {
+        padding: 14px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="overline">Academic Rankings</div>
+      <h1>学生成绩排名统计</h1>
+    </header>
+
+    <div class="search-panel">
+      <div class="search-row">
+        <label for="yearSelect">选择学年</label>
+        <select id="yearSelect">
+          <option value="">请选择年份</option>
+        </select>
+        <button class="btn-query" onclick="search()">查询成绩</button>
+      </div>
+    </div>
+
+    <div class="initial-state" id="initialState">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+      <p>请选择年份以查看学生排名</p>
+    </div>
+
+    <div class="results-panel" id="results">
+      <div class="results-header">
+        <div class="results-title" id="resultsHeader">统计结果</div>
+        <div class="stats-badges">
+          <div class="stat-badge">
+            <span>总人数</span>
+            <span class="number" id="totalStudents">0</span>
+          </div>
+          <div class="stat-badge">
+            <span>班级数</span>
+            <span class="number" id="totalClasses">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="class-filters" id="classFilter"></div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th class="rank-cell">总排名</th>
+              <th>学生姓名</th>
+              <th>班级</th>
+              <th>班级排名</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG'];
+    let currentData = null;
+    let currentClass = null;
+
+    async function loadYears() {
+      try {
+        const response = await fetch('/api/years');
+        const years = await response.json();
+        const select = document.getElementById('yearSelect');
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year + ' 学年';
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('加载年份失败:', error);
+      }
+    }
+
+    async function search() {
+      const year = document.getElementById('yearSelect').value;
+      if (!year) {
+        alert('请选择年份');
+        return;
+      }
+
+      const initialState = document.getElementById('initialState');
+      const results = document.getElementById('results');
+      const tableBody = document.getElementById('tableBody');
+      
+      initialState.style.display = 'none';
+      results.style.display = 'block';
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4">
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <div>加载中...</div>
+            </div>
+          </td>
+        </tr>`;
+
+      try {
+        const response = await fetch(`/api/statistics/${year}`);
+        const data = await response.json();
+        
+        if (data.error) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="4">
+                <div class="error-state">${data.error}</div>
+              </td>
+            </tr>`;
+          return;
+        }
+
+        currentData = data;
+        currentClass = null;
+        
+        document.getElementById('resultsHeader').textContent = `${year} 学年成绩排名`;
+        document.getElementById('totalStudents').textContent = data.statistics.length;
+        
+        const classSet = new Set(data.statistics.map(s => s.className));
+        document.getElementById('totalClasses').textContent = classSet.size;
+
+        renderClassFilter();
+        renderTable(data.statistics);
+      } catch (error) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4">
+              <div class="error-state">请求失败: ${error.message}</div>
+            </td>
+          </tr>`;
+      }
+    }
+
+    function renderClassFilter() {
+      const filter = document.getElementById('classFilter');
+      filter.innerHTML = '';
+      
+      const allBtn = document.createElement('button');
+      allBtn.textContent = '全部';
+      allBtn.className = currentClass === null ? 'active' : '';
+      allBtn.onclick = () => {
+        currentClass = null;
+        renderClassFilter();
+        renderTable(currentData.statistics);
+      };
+      filter.appendChild(allBtn);
+
+      classes.forEach(cls => {
+        const btn = document.createElement('button');
+        btn.textContent = cls;
+        btn.className = currentClass === cls ? 'active' : '';
+        btn.onclick = () => {
+          currentClass = cls;
+          renderClassFilter();
+          renderTable(currentData.statistics.filter(s => s.className === cls));
+        };
+        filter.appendChild(btn);
+      });
+    }
+
+    function renderTable(data) {
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+
+      data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.className = 'row-animate';
+        row.style.animationDelay = `${index * 0.03}s`;
+        
+        let rankClass = '';
+        if (item.total_ranking === 1) rankClass = 'gold';
+        else if (item.total_ranking === 2) rankClass = 'silver';
+        else if (item.total_ranking === 3) rankClass = 'bronze';
+        
+        row.innerHTML = `
+          <td class="rank-cell">
+            <span class="rank-badge ${rankClass}">${item.total_ranking}</span>
+          </td>
+          <td class="student-name">${item.studentName}</td>
+          <td class="class-cell">${item.className}</td>
+          <td class="class-rank-cell">#${item.class_ranking}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    loadYears();
+
+    document.getElementById('yearSelect').addEventListener('change', function() {
+      if (this.value) {
+        search();
+      }
+    });
+  </script>
+</body>
+</html>
