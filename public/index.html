@@ -6,84 +6,15 @@
   <title>学生成绩排名统计</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f8f9fa;
-      min-height: 100vh;
-    }
-    .sidebar {
-      background-color: #fff;
-      border-right: 1px solid #dee2e6;
-      min-height: 100vh;
-    }
-    .sidebar .nav-link {
-      color: #495057;
-      border-radius: 0.375rem;
-      margin-bottom: 0.25rem;
-    }
-    .sidebar .nav-link:hover {
-      background-color: #e9ecef;
-    }
-    .sidebar .nav-link.active {
-      background-color: #0d6efd;
-      color: #fff;
-    }
-    .main-content {
-      padding: 2rem;
-    }
-    .stats-card {
-      background: #fff;
-      border-radius: 0.5rem;
-      padding: 1rem;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .stats-number {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #0d6efd;
-    }
-    .rank-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 0.375rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-    }
-    .rank-1 {
-      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-      color: #fff;
-    }
-    .rank-2 {
-      background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
-      color: #fff;
-    }
-    .rank-3 {
-      background: linear-gradient(135deg, #fd7e14 0%, #dc3545 100%);
-      color: #fff;
-    }
-    .score-high {
-      color: #198754;
-      font-weight: 600;
-    }
-    .score-mid {
-      color: #0d6efd;
-      font-weight: 600;
-    }
-    .score-low {
-      color: #dc3545;
-      font-weight: 600;
-    }
-    .class-filter .btn {
-      border-radius: 20px;
-    }
-  </style>
+  <link href="./css/style.css" rel="stylesheet">
 </head>
 <body>
   <div id="app">
+    <!-- 加载进度条 -->
+    <div class="progress-container" v-if="showProgress">
+      <div class="progress-bar" :style="{ width: progress + '%' }"></div>
+    </div>
+
     <div class="container-fluid">
       <div class="row">
         <!-- 左侧导航 -->
@@ -120,25 +51,29 @@
               <div class="col-6 col-md-3">
                 <div class="stats-card">
                   <div class="text-muted small">总人数</div>
-                  <div class="stats-number">{{ totalCount }}</div>
+                  <div v-if="loading" class="skeleton skeleton-number"></div>
+                  <div v-else class="stats-number">{{ totalCount }}</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
                 <div class="stats-card">
                   <div class="text-muted small">班级数</div>
-                  <div class="stats-number">{{ classCount }}</div>
+                  <div v-if="loading" class="skeleton skeleton-number"></div>
+                  <div v-else class="stats-number">{{ classCount }}</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
                 <div class="stats-card">
                   <div class="text-muted small">平均分</div>
-                  <div class="stats-number">{{ averageScore }}</div>
+                  <div v-if="loading" class="skeleton skeleton-number"></div>
+                  <div v-else class="stats-number">{{ averageScore }}</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
                 <div class="stats-card">
                   <div class="text-muted small">最高分</div>
-                  <div class="stats-number">{{ maxScore }}</div>
+                  <div v-if="loading" class="skeleton skeleton-number"></div>
+                  <div v-else class="stats-number">{{ maxScore }}</div>
                 </div>
               </div>
             </div>
@@ -189,18 +124,23 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="loading">
-                      <td colspan="5" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">加载中...</span>
-                        </div>
-                      </td>
-                    </tr>
+                    <!-- 骨架屏加载状态 -->
+                    <template v-if="loading">
+                      <tr v-for="i in 10" :key="'skeleton-' + i">
+                        <td><div class="skeleton skeleton-badge"></div></td>
+                        <td><div class="skeleton skeleton-text"></div></td>
+                        <td><div class="skeleton skeleton-badge"></div></td>
+                        <td><div class="skeleton skeleton-number"></div></td>
+                        <td><div class="skeleton skeleton-number"></div></td>
+                      </tr>
+                    </template>
+                    <!-- 错误状态 -->
                     <tr v-else-if="error">
                       <td colspan="5" class="text-center py-4 text-danger">
                         {{ error }}
                       </td>
                     </tr>
+                    <!-- 正常数据 -->
                     <tr v-else v-for="item in displayData" :key="item.studentName + item.className">
                       <td>
                         <span class="rank-badge" :class="'rank-' + item.total_ranking">
@@ -234,120 +174,6 @@
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const { createApp, ref, computed } = Vue;
-
-    createApp({
-      setup() {
-        const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG'];
-        
-        const years = ref([]);
-        const selectedYear = ref(null);
-        const currentData = ref(null);
-        const currentClass = ref(null);
-        const searchKeyword = ref('');
-        const loading = ref(false);
-        const error = ref('');
-
-        const classCount = computed(() => {
-          if (!currentData.value) return 0;
-          const classSet = new Set(currentData.value.statistics.map(s => s.className));
-          return classSet.size;
-        });
-
-        const totalCount = computed(() => {
-          if (!currentData.value) return 0;
-          return currentData.value.statistics.length;
-        });
-
-        const averageScore = computed(() => {
-          if (!currentData.value || currentData.value.statistics.length === 0) return 0;
-          const total = currentData.value.statistics.reduce((sum, s) => sum + s.score, 0);
-          return Math.round(total / currentData.value.statistics.length);
-        });
-
-        const maxScore = computed(() => {
-          if (!currentData.value || currentData.value.statistics.length === 0) return 0;
-          return Math.max(...currentData.value.statistics.map(s => s.score));
-        });
-
-        const displayData = computed(() => {
-          if (!currentData.value) return [];
-          let data = currentData.value.statistics;
-          
-          if (currentClass.value !== null) {
-            data = data.filter(s => s.className === currentClass.value);
-          }
-          
-          if (searchKeyword.value) {
-            const keyword = searchKeyword.value.toLowerCase();
-            data = data.filter(s => s.studentName.toLowerCase().includes(keyword));
-          }
-          
-          return data;
-        });
-
-        async function loadYears() {
-          try {
-            const response = await fetch('/api/years');
-            const data = await response.json();
-            years.value = data.sort((a, b) => b - a);
-            if (years.value.length > 0) {
-              selectYear(years.value[0]);
-            }
-          } catch (e) {
-            console.error('加载年份失败:', e);
-          }
-        }
-
-        async function selectYear(year) {
-          selectedYear.value = year;
-          loading.value = true;
-          error.value = '';
-          currentClass.value = null;
-
-          try {
-            const response = await fetch(`/api/statistics/${year}`);
-            const data = await response.json();
-            
-            if (data.error) {
-              error.value = data.error;
-            } else {
-              currentData.value = data;
-            }
-          } catch (e) {
-            error.value = '请求失败: ' + e.message;
-          } finally {
-            loading.value = false;
-          }
-        }
-
-        function getScoreClass(score) {
-          if (score >= 90) return 'score-high';
-          if (score >= 60) return 'score-mid';
-          return 'score-low';
-        }
-
-        loadYears();
-
-        return {
-          classes,
-          years,
-          selectedYear,
-          currentClass,
-          searchKeyword,
-          loading,
-          error,
-          classCount,
-          totalCount,
-          averageScore,
-          maxScore,
-          displayData,
-          selectYear,
-          getScoreClass
-        };
-      }
-    }).mount('#app');
-  </script>
+  <script src="./js/app.js"></script>
 </body>
 </html>
