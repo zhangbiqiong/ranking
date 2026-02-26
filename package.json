@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "start:prod": "node server.js --prod",
-    "test": "node test.js",
-    "build": "pkg . --targets node18-linux-x64 --output ranking-system"
+    "test": "node test.js"
   },
   "keywords": ["ranking", "statistics", "education"],
   "author": "",
@@ -16,8 +15,5 @@
   "dependencies": {
     "express": "^5.2.1",
     "mysql2": "^3.18.0"
-  },
-  "devDependencies": {
-    "pkg": "^5.8.1"
   }
 }

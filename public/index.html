@@ -4,561 +4,236 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>学生成绩排名统计</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    :root {
-      --bg-deep: #0a0f1a;
-      --bg-card: #111827;
-      --bg-card-hover: #1a2332;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --accent-gold: #d4a853;
-      --accent-gold-light: #e8c87a;
-      --accent-copper: #c9a66b;
-      --border-subtle: rgba(255, 255, 255, 0.06);
-      --border-accent: rgba(212, 168, 83, 0.3);
-      --rank-gold: #d4a853;
-      --rank-silver: #a8b4c4;
-      --rank-bronze: #c4825a;
-      --shadow-luxury: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg-deep);
+      background-color: #f8f9fa;
       min-height: 100vh;
-      color: var(--text-primary);
-      position: relative;
     }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(212, 168, 83, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(17, 24, 39, 0.9) 0%, transparent 50%),
-        linear-gradient(180deg, #0a0f1a 0%, #0d1420 100%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .app-container {
-      display: flex;
-      min-height: 100vh;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* 左侧边栏 */
     .sidebar {
-      width: 280px;
-      background: var(--bg-card);
-      border-right: 1px solid var(--border-subtle);
-      padding: 24px 0;
-      display: flex;
-      flex-direction: column;
+      background-color: #fff;
+      border-right: 1px solid #dee2e6;
+      min-height: 100vh;
     }
-
-    .sidebar-header {
-      padding: 0 24px 24px;
-      border-bottom: 1px solid var(--border-subtle);
-      margin-bottom: 16px;
+    .sidebar .nav-link {
+      color: #495057;
+      border-radius: 0.375rem;
+      margin-bottom: 0.25rem;
     }
-
-    .sidebar-title {
-      font-family: 'Noto Serif SC', serif;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 8px;
+    .sidebar .nav-link:hover {
+      background-color: #e9ecef;
     }
-
-    .sidebar-subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-      text-transform: uppercase;
+    .sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: #fff;
     }
-
-    .year-list {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .year-item {
-      padding: 16px 24px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      border-left: 3px solid transparent;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .year-item:hover {
-      background: var(--bg-card-hover);
-    }
-
-    .year-item.active {
-      background: rgba(212, 168, 83, 0.1);
-      border-left-color: var(--accent-gold);
-    }
-
-    .year-item .year-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .year-item.active .year-label {
-      color: var(--accent-gold);
-    }
-
-    .year-item .year-arrow {
-      opacity: 0;
-      transition: opacity 0.25s ease;
-      color: var(--accent-gold);
-    }
-
-    .year-item.active .year-arrow {
-      opacity: 1;
-    }
-
-    /* 右侧内容 */
     .main-content {
-      flex: 1;
-      padding: 32px 40px;
-      overflow-y: auto;
+      padding: 2rem;
     }
-
-    .content-header {
-      margin-bottom: 32px;
-    }
-
-    .content-title {
-      font-family: 'Noto Serif SC', serif;
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-
-    .content-title::after {
-      content: '';
-      display: block;
-      width: 60px;
-      height: 2px;
-      background: linear-gradient(90deg, var(--accent-gold), transparent);
-      margin-top: 12px;
-    }
-
-    .stats-summary {
-      display: flex;
-      gap: 24px;
-      margin-top: 20px;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .stat-label {
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .stat-value {
-      color: var(--accent-gold);
-      font-weight: 600;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* 班级筛选 */
-    .class-filters {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-
-    .filter-btn {
-      padding: 8px 16px;
-      background: transparent;
-      border: 1px solid var(--border-subtle);
-      border-radius: 20px;
-      color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-
-    .filter-btn:hover {
-      border-color: var(--text-secondary);
-      color: var(--text-secondary);
-    }
-
-    .filter-btn.active {
-      background: var(--accent-gold);
-      border-color: var(--accent-gold);
-      color: #0a0f1a;
-    }
-
-    /* 表格 */
-    .table-container {
-      background: var(--bg-card);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border-subtle);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    thead {
-      background: rgba(0, 0, 0, 0.2);
-    }
-
-    th {
-      padding: 14px 20px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    th:first-child {
-      width: 80px;
-    }
-
-    th:nth-child(4),
-    th:nth-child(5) {
-      width: 100px;
+    .stats-card {
+      background: #fff;
+      border-radius: 0.5rem;
+      padding: 1rem;
       text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-
-    td {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border-subtle);
+    .stats-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0d6efd;
     }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    tbody tr {
-      transition: background 0.2s;
-    }
-
-    tbody tr:hover {
-      background: var(--bg-card-hover);
-    }
-
     .rank-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       width: 32px;
       height: 32px;
-      border-radius: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      border-radius: 0.375rem;
       font-weight: 600;
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-subtle);
+      font-size: 0.875rem;
     }
-
-    .rank-badge.gold {
-      background: linear-gradient(135deg, var(--rank-gold) 0%, #b8923d 100%);
-      color: #0a0f1a;
-      border-color: var(--rank-gold);
+    .rank-1 {
+      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+      color: #fff;
     }
-
-    .rank-badge.silver {
-      background: linear-gradient(135deg, var(--rank-silver) 0%, #8899ad 100%);
-      color: #0a0f1a;
-      border-color: var(--rank-silver);
+    .rank-2 {
+      background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
+      color: #fff;
     }
-
-    .rank-badge.bronze {
-      background: linear-gradient(135deg, var(--rank-bronze) 0%, #a66b48 100%);
-      color: #0a0f1a;
-      border-color: var(--rank-bronze);
+    .rank-3 {
+      background: linear-gradient(135deg, #fd7e14 0%, #dc3545 100%);
+      color: #fff;
     }
-
-    .student-name {
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .class-cell {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .score-cell {
-      text-align: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 600;
-      font-size: 15px;
-    }
-
     .score-high {
-      color: #4ade80;
+      color: #198754;
+      font-weight: 600;
     }
-
     .score-mid {
-      color: var(--accent-gold);
+      color: #0d6efd;
+      font-weight: 600;
     }
-
     .score-low {
-      color: #f87171;
+      color: #dc3545;
+      font-weight: 600;
     }
-
-    .ranking-cell {
-      text-align: center;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-muted);
-    }
-
-    /* 空状态 */
-    .empty-state {
-      text-align: center;
-      padding: 80px 40px;
-      color: var(--text-muted);
-    }
-
-    .empty-state svg {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 20px;
-      opacity: 0.3;
-    }
-
-    .empty-state p {
-      font-size: 15px;
-    }
-
-    /* 加载状态 */
-    .loading-state {
-      text-align: center;
-      padding: 60px 40px;
-      color: var(--text-muted);
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--border-subtle);
-      border-top-color: var(--accent-gold);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* 响应式 */
-    @media (max-width: 768px) {
-      .app-container {
-        flex-direction: column;
-      }
-
-      .sidebar {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        padding: 16px;
-        border-right: none;
-        border-bottom: 1px solid var(--border-subtle);
-      }
-
-      .sidebar-header {
-        padding: 0;
-        margin-bottom: 0;
-        margin-right: 24px;
-        border-bottom: none;
-        border-right: 1px solid var(--border-subtle);
-        padding-right: 24px;
-      }
-
-      .sidebar-title {
-        font-size: 1rem;
-        margin-bottom: 0;
-      }
-
-      .sidebar-subtitle {
-        display: none;
-      }
-
-      .year-list {
-        display: flex;
-        overflow-x: auto;
-        gap: 8px;
-      }
-
-      .year-item {
-        padding: 8px 16px;
-        border-left: none;
-        border-radius: 20px;
-        white-space: nowrap;
-        border: 1px solid var(--border-subtle);
-      }
-
-      .year-item.active {
-        border-left: none;
-        border-color: var(--accent-gold);
-      }
-
-      .year-item .year-arrow {
-        display: none;
-      }
-
-      .main-content {
-        padding: 24px 16px;
-      }
+    .class-filter .btn {
+      border-radius: 20px;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="app-container">
-      <!-- 左侧边栏 -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-title">成绩统计</div>
-          <div class="sidebar-subtitle">Academic Rankings</div>
-        </div>
-        <div class="year-list">
-          <div 
-            v-for="year in years" 
-            :key="year"
-            class="year-item"
-            :class="{ active: selectedYear === year }"
-            @click="selectYear(year)"
-          >
-            <span class="year-label">{{ year }} 学年</span>
-            <span class="year-arrow">›</span>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse show">
+          <div class="position-sticky pt-3">
+            <div class="px-3 mb-3">
+              <h5 class="mb-1">成绩统计</h5>
+              <small class="text-muted">Academic Rankings</small>
+            </div>
+            <ul class="nav flex-column">
+              <li class="nav-item" v-for="year in years" :key="year">
+                <a 
+                  class="nav-link" 
+                  :class="{ active: selectedYear === year }"
+                  href="#" 
+                  @click.prevent="selectYear(year)"
+                >
+                  <i class="bi bi-calendar3 me-2"></i>
+                  {{ year }} 学年
+                  <i class="bi bi-chevron-right ms-auto" v-if="selectedYear === year"></i>
+                </a>
+              </li>
+            </ul>
           </div>
-        </div>
-      </aside>
+        </nav>
 
-      <!-- 右侧内容 -->
-      <main class="main-content">
-        <template v-if="selectedYear">
-          <div class="content-header">
-            <h1 class="content-title">{{ selectedYear }} 学年成绩排名</h1>
-            <div class="stats-summary">
-              <div class="stat-item">
-                <span class="stat-label">总人数</span>
-                <span class="stat-value">{{ displayData.length }}</span>
+        <!-- 右侧内容 -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content" v-if="selectedYear">
+          <!-- 标题和统计 -->
+          <div class="mb-4">
+            <h2 class="mb-3">{{ selectedYear }} 学年成绩排名</h2>
+            
+            <div class="row g-3 mb-4">
+              <div class="col-6 col-md-3">
+                <div class="stats-card">
+                  <div class="text-muted small">总人数</div>
+                  <div class="stats-number">{{ totalCount }}</div>
+                </div>
               </div>
-              <div class="stat-item">
-                <span class="stat-label">班级数</span>
-                <span class="stat-value">{{ classCount }}</span>
+              <div class="col-6 col-md-3">
+                <div class="stats-card">
+                  <div class="text-muted small">班级数</div>
+                  <div class="stats-number">{{ classCount }}</div>
+                </div>
               </div>
-              <div class="stat-item">
-                <span class="stat-label">平均分</span>
-                <span class="stat-value">{{ averageScore }}</span>
+              <div class="col-6 col-md-3">
+                <div class="stats-card">
+                  <div class="text-muted small">平均分</div>
+                  <div class="stats-number">{{ averageScore }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="stats-card">
+                  <div class="text-muted small">最高分</div>
+                  <div class="stats-number">{{ maxScore }}</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="class-filters">
+          <!-- 搜索和班级筛选 -->
+          <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
+            <div class="input-group" style="max-width: 250px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="搜索学生姓名..."
+                v-model="searchKeyword"
+              >
+            </div>
+            
             <button 
-              class="filter-btn" 
-              :class="{ active: currentClass === null }"
+              class="btn btn-sm" 
+              :class="currentClass === null ? 'btn-primary' : 'btn-outline-primary'"
               @click="currentClass = null"
-            >全部</button>
+            >
+              全部
+            </button>
             <button 
               v-for="cls in classes" 
               :key="cls"
-              class="filter-btn"
-              :class="{ active: currentClass === cls }"
+              class="btn btn-sm"
+              :class="currentClass === cls ? 'btn-primary' : 'btn-outline-primary'"
               @click="currentClass = cls"
-            >{{ cls }}</button>
+            >
+              {{ cls }}
+            </button>
           </div>
 
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>排名</th>
-                  <th>学生姓名</th>
-                  <th>班级</th>
-                  <th>成绩</th>
-                  <th>班级排名</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="loading">
-                  <td colspan="5">
-                    <div class="loading-state">
-                      <div class="spinner"></div>
-                      <div>加载中...</div>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-else-if="error">
-                  <td colspan="5">
-                    <div class="loading-state" style="color: #ef4444;">{{ error }}</div>
-                  </td>
-                </tr>
-                <tr 
-                  v-else 
-                  v-for="item in displayData" 
-                  :key="item.studentName + item.className"
-                >
-                  <td>
-                    <span class="rank-badge" :class="getRankClass(item.total_ranking)">
-                      {{ item.total_ranking }}
-                    </span>
-                  </td>
-                  <td class="student-name">{{ item.studentName }}</td>
-                  <td class="class-cell">{{ item.className }}</td>
-                  <td class="score-cell" :class="getScoreClass(item.score)">{{ item.score }}</td>
-                  <td class="ranking-cell">#{{ item.class_ranking }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- 数据表格 -->
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 80px;">排名</th>
+                      <th>学生姓名</th>
+                      <th>班级</th>
+                      <th style="width: 100px;">成绩</th>
+                      <th style="width: 100px;">班级排名</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="loading">
+                      <td colspan="5" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">加载中...</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-else-if="error">
+                      <td colspan="5" class="text-center py-4 text-danger">
+                        {{ error }}
+                      </td>
+                    </tr>
+                    <tr v-else v-for="item in displayData" :key="item.studentName + item.className">
+                      <td>
+                        <span class="rank-badge" :class="'rank-' + item.total_ranking">
+                          {{ item.total_ranking }}
+                        </span>
+                      </td>
+                      <td>{{ item.studentName }}</td>
+                      <td>
+                        <span class="badge bg-secondary">{{ item.className }}</span>
+                      </td>
+                      <td :class="getScoreClass(item.score)">{{ item.score }}</td>
+                      <td class="text-muted">#{{ item.class_ranking }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </template>
+        </main>
 
-        <div v-else class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          <p>请选择左侧学年查看成绩排名</p>
-        </div>
-      </main>
+        <!-- 空状态 -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content d-flex align-items-center justify-content-center" v-else>
+          <div class="text-center text-muted">
+            <i class="bi bi-bar-chart-steps display-1"></i>
+            <p class="mt-3">请选择左侧学年查看成绩排名</p>
+          </div>
+        </main>
+      </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const { createApp, ref, computed } = Vue;
 
@@ -570,6 +245,7 @@
         const selectedYear = ref(null);
         const currentData = ref(null);
         const currentClass = ref(null);
+        const searchKeyword = ref('');
         const loading = ref(false);
         const error = ref('');
 
@@ -579,18 +255,36 @@
           return classSet.size;
         });
 
+        const totalCount = computed(() => {
+          if (!currentData.value) return 0;
+          return currentData.value.statistics.length;
+        });
+
         const averageScore = computed(() => {
           if (!currentData.value || currentData.value.statistics.length === 0) return 0;
           const total = currentData.value.statistics.reduce((sum, s) => sum + s.score, 0);
           return Math.round(total / currentData.value.statistics.length);
         });
 
+        const maxScore = computed(() => {
+          if (!currentData.value || currentData.value.statistics.length === 0) return 0;
+          return Math.max(...currentData.value.statistics.map(s => s.score));
+        });
+
         const displayData = computed(() => {
           if (!currentData.value) return [];
-          if (currentClass.value === null) {
-            return currentData.value.statistics;
+          let data = currentData.value.statistics;
+          
+          if (currentClass.value !== null) {
+            data = data.filter(s => s.className === currentClass.value);
           }
-          return currentData.value.statistics.filter(s => s.className === currentClass.value);
+          
+          if (searchKeyword.value) {
+            const keyword = searchKeyword.value.toLowerCase();
+            data = data.filter(s => s.studentName.toLowerCase().includes(keyword));
+          }
+          
+          return data;
         });
 
         async function loadYears() {
@@ -598,6 +292,9 @@
             const response = await fetch('/api/years');
             const data = await response.json();
             years.value = data.sort((a, b) => b - a);
+            if (years.value.length > 0) {
+              selectYear(years.value[0]);
+            }
           } catch (e) {
             console.error('加载年份失败:', e);
           }
@@ -625,13 +322,6 @@
           }
         }
 
-        function getRankClass(rank) {
-          if (rank === 1) return 'gold';
-          if (rank === 2) return 'silver';
-          if (rank === 3) return 'bronze';
-          return '';
-        }
-
         function getScoreClass(score) {
           if (score >= 90) return 'score-high';
           if (score >= 60) return 'score-mid';
@@ -645,13 +335,15 @@
           years,
           selectedYear,
           currentClass,
+          searchKeyword,
           loading,
           error,
           classCount,
+          totalCount,
           averageScore,
+          maxScore,
           displayData,
           selectYear,
-          getRankClass,
           getScoreClass
         };
       }
