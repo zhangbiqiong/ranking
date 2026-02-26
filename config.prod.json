@@ -7,5 +7,9 @@
   },
   "server": {
     "port": 3000
+  },
+  "jwt": {
+    "secret": "your-jwt-secret-key-change-in-production",
+    "expiresIn": "24h"
   }
 }

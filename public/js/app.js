@@ -3,7 +3,21 @@ const { createApp, ref, computed } = Vue;
 createApp({
   setup() {
     const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG'];
-    
+
+    // 认证状态
+    const isAuthenticated = ref(false);
+    const token = ref(localStorage.getItem('token'));
+    const currentUsername = ref(localStorage.getItem('username') || '');
+    const authTab = ref('login');
+    const authForm = ref({ username: '', password: '' });
+    const authLoading = ref(false);
+    const authError = ref('');
+
+    if (token.value) {
+      isAuthenticated.value = true;
+    }
+
+    // 数据状态
     const years = ref([]);
     const selectedYear = ref(null);
     const currentData = ref(null);
@@ -11,13 +25,6 @@ createApp({
     const searchKeyword = ref('');
     const loading = ref(false);
     const error = ref('');
-    
-    // 数据缓存
-    const dataCache = ref({});
-    
-    // 加载进度
-    const showProgress = ref(false);
-    const progress = ref(0);
 
     const classCount = computed(() => {
       if (!currentData.value) return 0;
@@ -44,22 +51,80 @@ createApp({
     const displayData = computed(() => {
       if (!currentData.value) return [];
       let data = currentData.value.statistics;
-      
+
       if (currentClass.value !== null) {
         data = data.filter(s => s.className === currentClass.value);
       }
-      
+
       if (searchKeyword.value) {
         const keyword = searchKeyword.value.toLowerCase();
         data = data.filter(s => s.studentName.toLowerCase().includes(keyword));
       }
-      
+
       return data;
     });
 
+    async function handleAuth() {
+      authLoading.value = true;
+      authError.value = '';
+
+      try {
+        const endpoint = authTab.value === 'login' ? '/api/auth/login' : '/api/auth/register';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(authForm.value)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || '请求失败');
+        }
+
+        if (authTab.value === 'login') {
+          token.value = data.token;
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('username', authForm.value.username);
+          currentUsername.value = authForm.value.username;
+          isAuthenticated.value = true;
+          loadYears();
+        } else {
+          authTab.value = 'login';
+          authForm.value = { username: '', password: '' };
+          alert('注册成功，请登录');
+        }
+      } catch (err) {
+        authError.value = err.message;
+      } finally {
+        authLoading.value = false;
+      }
+    }
+
+    function logout() {
+      token.value = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      currentUsername.value = '';
+      isAuthenticated.value = false;
+      years.value = [];
+      selectedYear.value = null;
+      currentData.value = null;
+    }
+
+    function getAuthHeaders() {
+      return token.value ? { 'Authorization': `Bearer ${token.value}` } : {};
+    }
+
     async function loadYears() {
       try {
-        const response = await fetch('/api/years');
+        const response = await fetch('/api/years', {
+          headers: getAuthHeaders()
+        });
+        if (response.status === 401) {
+          logout();
+          return;
+        }
         const data = await response.json();
         years.value = data.sort((a, b) => b - a);
         if (years.value.length > 0) {
@@ -72,54 +137,26 @@ createApp({
 
     async function selectYear(year) {
       selectedYear.value = year;
-      
-      // 检查缓存
-      if (dataCache.value[year]) {
-        currentData.value = dataCache.value[year];
-        loading.value = false;
-        error.value = '';
-        return;
-      }
-      
       loading.value = true;
       error.value = '';
       currentClass.value = null;
-      
-      // 显示进度条
-      showProgress.value = true;
-      progress.value = 0;
-      
-      // 模拟进度
-      const progressInterval = setInterval(() => {
-        if (progress.value < 90) {
-          progress.value += Math.random() * 10;
-        }
-      }, 100);
 
       try {
-        const response = await fetch(`/api/statistics/${year}`);
+        const response = await fetch(`/api/statistics/${year}`, {
+          headers: getAuthHeaders()
+        });
+        if (response.status === 401) {
+          logout();
+          return;
+        }
         const data = await response.json();
-        
-        // 完成进度
-        progress.value = 100;
-        clearInterval(progressInterval);
-        
-        setTimeout(() => {
-          showProgress.value = false;
-          progress.value = 0;
-        }, 300);
-        
+
         if (data.error) {
           error.value = data.error;
         } else {
           currentData.value = data;
-          // 缓存数据
-          dataCache.value[year] = data;
         }
       } catch (e) {
-        clearInterval(progressInterval);
-        showProgress.value = false;
-        progress.value = 0;
         error.value = '请求失败: ' + e.message;
       } finally {
         loading.value = false;
@@ -132,23 +169,32 @@ createApp({
       return 'score-low';
     }
 
-    loadYears();
+    if (isAuthenticated.value) {
+      loadYears();
+    }
 
     return {
       classes,
+      isAuthenticated,
+      token,
+      currentUsername,
+      authTab,
+      authForm,
+      authLoading,
+      authError,
       years,
       selectedYear,
       currentClass,
       searchKeyword,
       loading,
       error,
-      showProgress,
-      progress,
       classCount,
       totalCount,
       averageScore,
       maxScore,
       displayData,
+      handleAuth,
+      logout,
       selectYear,
       getScoreClass
     };

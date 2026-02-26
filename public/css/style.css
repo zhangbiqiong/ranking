@@ -3,6 +3,18 @@ body {
   min-height: 100vh;
 }
 
+.auth-container {
+  max-width: 400px;
+  margin: 100px auto;
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
 .sidebar {
   background-color: #fff;
   border-right: 1px solid #dee2e6;
@@ -87,71 +99,6 @@ body {
   border-radius: 20px;
 }
 
-/* 骨架屏样式 */
-.skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 0.25rem;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.skeleton-text {
-  height: 1.2rem;
-  width: 80%;
-  margin-bottom: 0.5rem;
-}
-
-.skeleton-badge {
-  height: 1.5rem;
-  width: 3rem;
-  border-radius: 0.25rem;
-}
-
-.skeleton-number {
-  height: 2rem;
-  width: 3rem;
-  border-radius: 0.25rem;
-}
-
-.skeleton-row {
-  height: 3rem;
-  width: 100%;
-  margin-bottom: 0.5rem;
-}
-
-/* 加载进度条 */
-.progress-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #f0f0f0;
-  z-index: 9999;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #0d6efd, #0dcaf0, #0d6efd);
-  background-size: 200% 100%;
-  animation: progress-gradient 2s linear infinite;
-  transition: width 0.3s ease;
-}
-
-@keyframes progress-gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
+.navbar {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }

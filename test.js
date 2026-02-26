@@ -43,6 +43,27 @@ const Ranking = sequelize.define('Ranking', {
   timestamps: false
 });
 
+// 定义User模型
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  tableName: 'users',
+  timestamps: false
+});
+
 const chineseNames = [
   '张伟', '李娜', '王芳', '刘洋', '陈静', '杨明', '赵磊', '孙丽', '周强', '吴敏',
   '郑鹏', '王秀英', '李明', '陈涛', '林芳', '黄勇', '周莉', '吴磊', '徐婷', '何伟',

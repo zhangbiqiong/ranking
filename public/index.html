@@ -6,174 +6,228 @@
   <title>学生成绩排名统计</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="./css/style.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
 </head>
 <body>
   <div id="app">
-    <!-- 加载进度条 -->
-    <div class="progress-container" v-if="showProgress">
-      <div class="progress-bar" :style="{ width: progress + '%' }"></div>
+    <!-- 登录/注册页面 -->
+    <div v-if="!isAuthenticated" class="auth-container">
+      <div class="auth-card">
+        <h3 class="text-center mb-4">学生成绩统计系统</h3>
+        
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button 
+              class="nav-link" 
+              :class="{ active: authTab === 'login' }"
+              @click="authTab = 'login'"
+            >登录</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button 
+              class="nav-link" 
+              :class="{ active: authTab === 'register' }"
+              @click="authTab = 'register'"
+            >注册</button>
+          </li>
+        </ul>
+        
+        <div v-if="authError" class="alert alert-danger">{{ authError }}</div>
+        
+        <form @submit.prevent="handleAuth">
+          <div class="mb-3">
+            <label class="form-label">用户名</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              v-model="authForm.username"
+              required
+            >
+          </div>
+          <div class="mb-3">
+            <label class="form-label">密码</label>
+            <input 
+              type="password" 
+              class="form-control" 
+              v-model="authForm.password"
+              required
+            >
+          </div>
+          <button 
+            type="submit" 
+            class="btn btn-primary w-100"
+            :disabled="authLoading"
+          >
+            <span v-if="authLoading" class="spinner-border spinner-border-sm me-2"></span>
+            {{ authTab === 'login' ? '登录' : '注册' }}
+          </button>
+        </form>
+      </div>
     </div>
 
-    <div class="container-fluid">
-      <div class="row">
-        <!-- 左侧导航 -->
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse show">
-          <div class="position-sticky pt-3">
-            <div class="px-3 mb-3">
-              <h5 class="mb-1">成绩统计</h5>
-              <small class="text-muted">Academic Rankings</small>
+    <!-- 主页面 -->
+    <div v-else>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+          <span class="navbar-brand mb-0 h1">学生成绩统计系统</span>
+          <div class="d-flex align-items-center">
+            <span class="text-light me-3">{{ currentUsername }}</span>
+            <button class="btn btn-outline-light btn-sm" @click="logout">退出</button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <div class="row">
+          <!-- 左侧导航 -->
+          <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse show">
+            <div class="position-sticky pt-3">
+              <div class="px-3 mb-3">
+                <h6 class="mb-1">选择学年</h6>
+                <small class="text-muted">Academic Rankings</small>
+              </div>
+              <ul class="nav flex-column">
+                <li class="nav-item" v-for="year in years" :key="year">
+                  <a 
+                    class="nav-link" 
+                    :class="{ active: selectedYear === year }"
+                    href="#" 
+                    @click.prevent="selectYear(year)"
+                  >
+                    <i class="bi bi-calendar3 me-2"></i>
+                    {{ year }} 学年
+                    <i class="bi bi-chevron-right ms-auto" v-if="selectedYear === year"></i>
+                  </a>
+                </li>
+              </ul>
             </div>
-            <ul class="nav flex-column">
-              <li class="nav-item" v-for="year in years" :key="year">
-                <a 
-                  class="nav-link" 
-                  :class="{ active: selectedYear === year }"
-                  href="#" 
-                  @click.prevent="selectYear(year)"
+          </nav>
+
+          <!-- 右侧内容 -->
+          <main class="col-md-9 ms-sm-auto col-lg-10 main-content" v-if="selectedYear">
+            <!-- 标题和统计 -->
+            <div class="mb-4">
+              <h2 class="mb-3">{{ selectedYear }} 学年成绩排名</h2>
+              
+              <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                  <div class="stats-card">
+                    <div class="text-muted small">总人数</div>
+                    <div class="stats-number">{{ totalCount }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="stats-card">
+                    <div class="text-muted small">班级数</div>
+                    <div class="stats-number">{{ classCount }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="stats-card">
+                    <div class="text-muted small">平均分</div>
+                    <div class="stats-number">{{ averageScore }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="stats-card">
+                    <div class="text-muted small">最高分</div>
+                    <div class="stats-number">{{ maxScore }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 搜索和班级筛选 -->
+            <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
+              <div class="input-group" style="max-width: 250px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="搜索学生姓名..."
+                  v-model="searchKeyword"
                 >
-                  <i class="bi bi-calendar3 me-2"></i>
-                  {{ year }} 学年
-                  <i class="bi bi-chevron-right ms-auto" v-if="selectedYear === year"></i>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </nav>
-
-        <!-- 右侧内容 -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 main-content" v-if="selectedYear">
-          <!-- 标题和统计 -->
-          <div class="mb-4">
-            <h2 class="mb-3">{{ selectedYear }} 学年成绩排名</h2>
-            
-            <div class="row g-3 mb-4">
-              <div class="col-6 col-md-3">
-                <div class="stats-card">
-                  <div class="text-muted small">总人数</div>
-                  <div v-if="loading" class="skeleton skeleton-number"></div>
-                  <div v-else class="stats-number">{{ totalCount }}</div>
-                </div>
               </div>
-              <div class="col-6 col-md-3">
-                <div class="stats-card">
-                  <div class="text-muted small">班级数</div>
-                  <div v-if="loading" class="skeleton skeleton-number"></div>
-                  <div v-else class="stats-number">{{ classCount }}</div>
-                </div>
-              </div>
-              <div class="col-6 col-md-3">
-                <div class="stats-card">
-                  <div class="text-muted small">平均分</div>
-                  <div v-if="loading" class="skeleton skeleton-number"></div>
-                  <div v-else class="stats-number">{{ averageScore }}</div>
-                </div>
-              </div>
-              <div class="col-6 col-md-3">
-                <div class="stats-card">
-                  <div class="text-muted small">最高分</div>
-                  <div v-if="loading" class="skeleton skeleton-number"></div>
-                  <div v-else class="stats-number">{{ maxScore }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 搜索和班级筛选 -->
-          <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
-            <div class="input-group" style="max-width: 250px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input 
-                type="text" 
-                class="form-control" 
-                placeholder="搜索学生姓名..."
-                v-model="searchKeyword"
+              
+              <button 
+                class="btn btn-sm" 
+                :class="currentClass === null ? 'btn-primary' : 'btn-outline-primary'"
+                @click="currentClass = null"
               >
+                全部
+              </button>
+              <button 
+                v-for="cls in classes" 
+                :key="cls"
+                class="btn btn-sm"
+                :class="currentClass === cls ? 'btn-primary' : 'btn-outline-primary'"
+                @click="currentClass = cls"
+              >
+                {{ cls }}
+              </button>
             </div>
-            
-            <button 
-              class="btn btn-sm" 
-              :class="currentClass === null ? 'btn-primary' : 'btn-outline-primary'"
-              @click="currentClass = null"
-            >
-              全部
-            </button>
-            <button 
-              v-for="cls in classes" 
-              :key="cls"
-              class="btn btn-sm"
-              :class="currentClass === cls ? 'btn-primary' : 'btn-outline-primary'"
-              @click="currentClass = cls"
-            >
-              {{ cls }}
-            </button>
-          </div>
 
-          <!-- 数据表格 -->
-          <div class="card">
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th style="width: 80px;">排名</th>
-                      <th>学生姓名</th>
-                      <th>班级</th>
-                      <th style="width: 100px;">成绩</th>
-                      <th style="width: 100px;">班级排名</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- 骨架屏加载状态 -->
-                    <template v-if="loading">
-                      <tr v-for="i in 10" :key="'skeleton-' + i">
-                        <td><div class="skeleton skeleton-badge"></div></td>
-                        <td><div class="skeleton skeleton-text"></div></td>
-                        <td><div class="skeleton skeleton-badge"></div></td>
-                        <td><div class="skeleton skeleton-number"></div></td>
-                        <td><div class="skeleton skeleton-number"></div></td>
+            <!-- 数据表格 -->
+            <div class="card">
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 80px;">排名</th>
+                        <th>学生姓名</th>
+                        <th>班级</th>
+                        <th style="width: 100px;">成绩</th>
+                        <th style="width: 100px;">班级排名</th>
                       </tr>
-                    </template>
-                    <!-- 错误状态 -->
-                    <tr v-else-if="error">
-                      <td colspan="5" class="text-center py-4 text-danger">
-                        {{ error }}
-                      </td>
-                    </tr>
-                    <!-- 正常数据 -->
-                    <tr v-else v-for="item in displayData" :key="item.studentName + item.className">
-                      <td>
-                        <span class="rank-badge" :class="'rank-' + item.total_ranking">
-                          {{ item.total_ranking }}
-                        </span>
-                      </td>
-                      <td>{{ item.studentName }}</td>
-                      <td>
-                        <span class="badge bg-secondary">{{ item.className }}</span>
-                      </td>
-                      <td :class="getScoreClass(item.score)">{{ item.score }}</td>
-                      <td class="text-muted">#{{ item.class_ranking }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      <tr v-if="loading">
+                        <td colspan="5" class="text-center py-4">
+                          <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-else-if="error">
+                        <td colspan="5" class="text-center py-4 text-danger">
+                          {{ error }}
+                        </td>
+                      </tr>
+                      <tr v-else v-for="item in displayData" :key="item.studentName + item.className">
+                        <td>
+                          <span class="rank-badge" :class="'rank-' + item.total_ranking">
+                            {{ item.total_ranking }}
+                          </span>
+                        </td>
+                        <td>{{ item.studentName }}</td>
+                        <td>
+                          <span class="badge bg-secondary">{{ item.className }}</span>
+                        </td>
+                        <td :class="getScoreClass(item.score)">{{ item.score }}</td>
+                        <td class="text-muted">#{{ item.class_ranking }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        </main>
+          </main>
 
-        <!-- 空状态 -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 main-content d-flex align-items-center justify-content-center" v-else>
-          <div class="text-center text-muted">
-            <i class="bi bi-bar-chart-steps display-1"></i>
-            <p class="mt-3">请选择左侧学年查看成绩排名</p>
-          </div>
-        </main>
+          <!-- 空状态 -->
+          <main class="col-md-9 ms-sm-auto col-lg-10 main-content d-flex align-items-center justify-content-center" v-else>
+            <div class="text-center text-muted">
+              <i class="bi bi-bar-chart-steps display-1"></i>
+              <p class="mt-3">请选择左侧学年查看成绩排名</p>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="./js/app.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

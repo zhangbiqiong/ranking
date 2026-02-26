@@ -1,19 +1,24 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const logger = require('./config/logger');
 const { sequelize, testConnection } = require('./models/database');
-const { Ranking, syncModel } = require('./models/Ranking');
+const { Ranking, syncModel: syncRanking } = require('./models/ranking');
+const { User, syncModel: syncUser } = require('./models/user');
 
 const isProduction = process.argv.includes('--prod') || process.env.NODE_ENV === 'production';
 const configFile = isProduction ? 'config.prod.json' : 'config.json';
 const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
 const dbConfig = config.db;
+const jwtConfig = config.jwt;
 const PORT = config.server.port;
 
 const app = express();
+app.use(express.json());
 app.use(express.static('public'));
 
 async function getStatistics(year) {
@@ -154,7 +159,7 @@ async function getStatistics(year) {
  *             example:
  *               error: "数据库连接失败"
  */
-app.get('/api/statistics/:year', async (req, res) => {
+app.get('/api/statistics/:year', authMiddleware, async (req, res) => {
   const year = req.params.year;
   logger.info(`收到统计查询请求，年份: ${year}`);
   
@@ -210,7 +215,7 @@ app.get('/api/statistics/:year', async (req, res) => {
  *             example:
  *               error: "数据库连接失败"
  */
-app.get('/api/years', async (req, res) => {
+app.get('/api/years', authMiddleware, async (req, res) => {
   logger.info('收到年份列表查询请求');
   
   try {
@@ -227,6 +232,91 @@ app.get('/api/years', async (req, res) => {
     logger.error('年份列表查询失败', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// JWT 验证中间件
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: '未授权，请先登录' });
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    const decoded = jwt.verify(token, jwtConfig.secret);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token无效或已过期' });
+  }
+}
+
+// 注册
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: '用户名和密码不能为空' });
+  }
+  
+  try {
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({ error: '用户名已存在' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      username,
+      password: hashedPassword
+    });
+    
+    logger.info(`新用户注册: ${username}`);
+    res.status(201).json({ message: '注册成功', userId: user.id });
+  } catch (error) {
+    logger.error('注册失败', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 登录
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: '用户名和密码不能为空' });
+  }
+  
+  try {
+    const user = await User.findOne({ where: { username } });
+    if (!user) {
+      return res.status(401).json({ error: '用户名或密码错误' });
+    }
+    
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: '用户名或密码错误' });
+    }
+    
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      jwtConfig.secret,
+      { expiresIn: jwtConfig.expiresIn }
+    );
+    
+    logger.info(`用户登录: ${username}`);
+    res.json({ message: '登录成功', token });
+  } catch (error) {
+    logger.error('登录失败', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 获取当前用户信息
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+  res.json({ username: req.user.username });
 });
 
 // Swagger 配置
@@ -274,7 +364,8 @@ async function initDatabase() {
   try {
     logger.info('开始初始化数据库');
     await testConnection();
-    await syncModel();
+    await syncRanking();
+    await syncUser();
     logger.info('数据库初始化完成');
   } catch (error) {
     logger.error('数据库初始化失败:', error);

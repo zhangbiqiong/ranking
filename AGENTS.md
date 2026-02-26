@@ -2,46 +2,32 @@
 
 ## Project Overview
 
-This is a Node.js + Express MySQL ranking statistics project with a web frontend. It provides student ranking statistics by year and class via REST API and web UI.
+Node.js + Express MySQL ranking statistics project with a Vue 3 web frontend. Provides student ranking statistics by year and class via REST API and web UI.
 
 ## Build/Lint/Test Commands
 
-### Running Tests
 ```bash
-node test.js        # Run all tests (creates table, inserts data, verifies results)
-```
+# Run all tests (creates table, inserts data, verifies all years)
+node test.js
 
-### Running the Application
-```bash
-npm start              # Start Express server (default port: 3000)
-npm run start:prod    # Start with production config
-```
+# Run the application
+npm start              # Development (port 3000)
+npm run start:prod    # Production config
 
-### Building for Production
-```bash
-# Create tarball (includes node_modules)
+# Build production tarball
 tar -czvf ranking-system.tar.gz \
   --exclude='*.log' \
   --exclude='.DS_Store' \
   server.js config.prod.json public/ test.js \
   package.json package-lock.json node_modules/
-```
 
-### PM2 Commands (Production)
-```bash
-# Start with pm2
+# PM2 production management
 pm2 start server.js --name ranking -- --prod
-
-# Other commands
 pm2 status
 pm2 logs ranking
 pm2 restart ranking
 pm2 stop ranking
 ```
-
-### Dependencies
-- express: Web framework
-- mysql2: MySQL database driver (use `mysql2/promise` for async/await)
 
 ## Code Style Guidelines
 
@@ -50,67 +36,69 @@ pm2 stop ranking
 - No comments unless explicitly required by the user
 - Use async/await for all asynchronous operations
 
-### Imports
-- Use CommonJS `require()` for Node.js modules
-- Use `mysql2/promise` for database connections
-- Use `express` for web server
+### Imports (CommonJS)
 ```javascript
 const express = require('express');
 const mysql = require('mysql2/promise');
 const path = require('path');
 ```
 
-### Database Connection
-- Always close connections with `await connection.end()`
-- Use parameterized queries to prevent SQL injection
-```javascript
-const [rows] = await connection.execute(query, params);
-```
-
 ### Naming Conventions
-- **Variables/Functions**: camelCase (e.g., `getStatistics`, `classRankingMap`)
-- **Constants**: camelCase or UPPER_SNAKE_CASE for configuration
-- **Files**: camelCase (e.g., `server.js`, `test.js`)
-- **API Endpoints**: RESTful, lowercase with hyphens
-**: lowercase (- **Database tablese.g., `ranking`)
-- **Database columns**: camelCase (e.g., `studentName`, `className`)
-
-### Error Handling
-- Always use `.catch(console.error)` or try-catch blocks for async functions
-- Exit with error code for critical failures
-- Return proper HTTP status codes in API
-```javascript
-main().catch(console.error);
-// API error handling
-res.status(500).json({ error: error.message });
-```
-
-### Type Conventions
-- No TypeScript in this project
-- MySQL INT maps to JavaScript number
+- **Variables/Functions**: camelCase (`getStatistics`, `classRankingMap`)
+- **Files**: camelCase (`server.js`, `test.js`)
+- **API Endpoints**: lowercase with hyphens
+- **Database tables**: lowercase (`ranking`)
+- **Database columns**: camelCase (`studentName`, `className`)
 
 ### Formatting
-- Use 2 spaces for indentation
-- No trailing semicolons (optional in Node.js)
+- 2 spaces for indentation
+- No trailing semicolons (optional)
 - Use template literals for string interpolation
 - One blank line between function definitions
 
-### Project Structure
-```
-├── server.js              # Express backend server
-├── config.json            # Development config
-├── config.prod.json       # Production config
-├── public/
-│   └── index.html         # Vue 3 frontend (Bootstrap 5)
-├── test.js                # Test script with verification
-├── README.md              # Project documentation
-├── AGENTS.md              # Agent coding guidelines
-├── opencode.jsonc         # OpenCode configuration (MCP)
-├── package.json
-└── node_modules/
+### Error Handling
+- Always use `.catch(console.error)` or try-catch for async functions
+- Exit with error code- Return proper HTTP for critical failures
+ status codes in API responses
+```javascript
+main().catch(console.error);
+res.status(500).json({ error: error.message });
 ```
 
-### Database Schema
+### Database
+- Use `connection.execute()` for parameterized queries
+- Always close connections with `await connection.end()`
+- Never concatenate SQL; use parameterized queries
+
+## Frontend Guidelines
+
+- Vue 3 Composition API via CDN
+- Bootstrap 5 for styling via CDN
+- Separate files under `public/`:
+  - `public/index.html` - Main HTML
+  - `public/css/style.css` - Styles
+  - `public/js/app.js` - Vue 3 application logic
+- Use `setup()`, `ref()`, `computed()` from Vue 3
+
+## Project Structure
+```
+├── server.js
+├── config.json / config.prod.json
+├── models/
+│   ├── database.js
+│   ├── ranking.js
+│   └── user.js
+├── public/
+│   ├── index.html
+│   ├── css/style.css
+│   └── js/app.js
+├── test.js
+├── README.md
+├── AGENTS.md
+└── package.json
+```
+
+## Database Schema
 ```sql
 CREATE TABLE ranking (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -119,59 +107,36 @@ CREATE TABLE ranking (
   class VARCHAR(255) NOT NULL,
   year INT NOT NULL
 );
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL
+);
 ```
 
-### Configuration
-Two configuration files:
-- `config.json` - Development environment
-- `config.prod.json` - Production environment (used for packaged executable)
+## Configuration
 
-```json
-{
-  "db": {
-    "host": "test-mysql.anytrek.app",
-    "user": "zhangbiqiong",
-    "password": "Zbq20240614",
-    "database": "zbqdemo"
-  },
-  "server": {
-    "port": 3000
-  }
-}
-```
-
-Load configuration in server.js:
+Two config files: `config.json` (dev), `config.prod.json` (prod). Load with:
 ```javascript
-const fs = require('fs');
-const isProduction = process.argv.includes('--prod') || process.env.NODE_ENV === 'production';
-const configFile = isProduction ? 'config.prod.json' : 'config.json';
-const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-const dbConfig = config.db;
-const PORT = config.server.port;
+const isProduction = process.argv.includes('--prod');
+const config = JSON.parse(fs.readFileSync(
+  isProduction ? 'config.prod.json' : 'config.json', 'utf8'
+));
 ```
 
-### REST API Design
-- Use RESTful conventions
-- Return JSON responses
-- Use appropriate HTTP status codes
-- Endpoint examples:
-  - `GET /api/years` - Get available years
-  - `GET /api/statistics/:year` - Get statistics for a year
+## REST API
 
-### Web Static Files
-- Serve static files from `public/` directory
-- Use middleware: `app.use(express.static('public'))`
+- Auth (public): `POST /api/auth/register`, `POST /api/auth/login`
+- Data (auth required): `GET /api/years`, `GET /api/statistics/:year`
+- Use Bearer token for authentication
 
-### Testing Guidelines
-- Tests should create/reset database tables using DROP + CREATE
-- Include verification logic to check result accuracy
-- Verify both ranking values and their ranges
+## Testing Guidelines
+- Create/reset tables with DROP + CREATE
+- Verify ranking values and ranges
 - Test all years (2023-2026)
 - Verify API responses when server is running
 
-### Best Practices
-1. Use `connection.execute()` for parameterized queries
-2. Close database connections after use
-3. Use Maps for efficient lookups when processing results
-4. Avoid SQL concatenation; use parameterized queries always
-5. Serve frontend from `/public` directory
+## Dependencies
+- express, mysql2, sequelize, jsonwebtoken, bcrypt
+- Vue 3, Bootstrap 5, Bootstrap Icons (via CDN)
