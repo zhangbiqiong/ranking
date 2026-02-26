@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise');
 const http = require('http');
+const { Sequelize, DataTypes } = require('sequelize');
 
 const dbConfig = {
   host: 'test-mysql.anytrek.app',
@@ -7,6 +7,41 @@ const dbConfig = {
   password: 'Zbq20240614',
   database: 'zbqdemo'
 };
+
+// 创建Sequelize实例
+const sequelize = new Sequelize(dbConfig.database, dbConfig.user, dbConfig.password, {
+  host: dbConfig.host,
+  dialect: 'mysql',
+  logging: false
+});
+
+// 定义Ranking模型
+const Ranking = sequelize.define('Ranking', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  studentName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  score: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  class: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  year: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+}, {
+  tableName: 'ranking',
+  timestamps: false
+});
 
 const chineseNames = [
   '张伟', '李娜', '王芳', '刘洋', '陈静', '杨明', '赵磊', '孙丽', '周强', '吴敏',
@@ -22,12 +57,12 @@ const classes = ['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'cl
 const years = [2023, 2024, 2025, 2026];
 
 async function getStatistics(year) {
-  const connection = await mysql.createConnection(dbConfig);
-  
-  const [rows] = await connection.execute(
-    `SELECT studentName, class, score FROM ranking WHERE year = ? ORDER BY score DESC`,
-    [year]
-  );
+  // 使用Sequelize查询数据
+  const rows = await Ranking.findAll({
+    where: { year },
+    attributes: ['studentName', 'class', 'score'],
+    order: [['score', 'DESC']]
+  });
   
   const result = [];
   const totalRankingMap = new Map();
@@ -64,7 +99,6 @@ async function getStatistics(year) {
     }
   }
   
-  await connection.end();
   return {
     year: year,
     statistics: result
@@ -245,38 +279,38 @@ async function verifyYearsAPI() {
 }
 
 async function main() {
-  const connection = await mysql.createConnection(dbConfig);
+  // 测试数据库连接
+  try {
+    await sequelize.authenticate();
+    console.log('数据库连接成功');
+  } catch (error) {
+    console.error('数据库连接失败:', error);
+    process.exit(1);
+  }
   
-  await connection.execute('DROP TABLE IF EXISTS ranking');
+  // 重新创建表
+  await Ranking.sync({ force: true });
+  console.log('表创建成功');
   
-  await connection.execute(`
-    CREATE TABLE ranking (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      studentName VARCHAR(255) NOT NULL,
-      score INT NOT NULL,
-      class VARCHAR(255) NOT NULL,
-      year INT NOT NULL
-    )
-  `);
-  
+  // 准备数据
   const values = [];
   for (const year of years) {
     for (let i = 0; i < classes.length; i++) {
       for (let j = 0; j < 10; j++) {
         const nameIndex = i * 10 + j;
-        values.push([chineseNames[nameIndex], Math.floor(Math.random() * 101), classes[i], year]);
+        values.push({
+          studentName: chineseNames[nameIndex],
+          score: Math.floor(Math.random() * 101),
+          class: classes[i],
+          year: year
+        });
       }
     }
   }
   
-  const placeholders = values.map(() => '(?, ?, ?, ?)').join(', ');
-  await connection.execute(
-    `INSERT INTO ranking (studentName, score, class, year) VALUES ${placeholders}`,
-    values.flat()
-  );
-  
+  // 批量插入数据
+  await Ranking.bulkCreate(values);
   console.log(`成功插入${values.length}条数据`);
-  await connection.end();
   
   let allPassed = true;
   

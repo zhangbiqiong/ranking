@@ -23,7 +23,7 @@ npm run start:prod    # Start with production config
 tar -czvf ranking-system.tar.gz \
   --exclude='*.log' \
   --exclude='.DS_Store' \
-  server.js config.prod.json public/ start.sh test.js \
+  server.js config.prod.json public/ test.js \
   package.json package-lock.json node_modules/
 ```
 
@@ -101,10 +101,11 @@ res.status(500).json({ error: error.message });
 ├── config.json            # Development config
 ├── config.prod.json       # Production config
 ├── public/
-│   └── index.html         # Vue 3 frontend
+│   └── index.html         # Vue 3 frontend (Bootstrap 5)
 ├── test.js                # Test script with verification
-├── start.sh               # Start script
 ├── README.md              # Project documentation
+├── AGENTS.md              # Agent coding guidelines
+├── opencode.jsonc         # OpenCode configuration (MCP)
 ├── package.json
 └── node_modules/
 ```

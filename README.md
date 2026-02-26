@@ -12,7 +12,6 @@
 │   └── index.html     # Vue 3 前端页面
 ├── config.json        # 开发环境配置
 ├── config.prod.json   # 生产环境配置
-├── start.sh          # 启动脚本
 ├── test.js           # 测试脚本
 ├── README.md         # 项目文档
 ├── package.json
@@ -88,7 +87,7 @@ pm2 start server.js --name ranking -- --prod
 tar -czvf ranking-system.tar.gz \
   --exclude='*.log' \
   --exclude='.DS_Store' \
-  server.js config.prod.json public/ start.sh test.js \
+  server.js config.prod.json public/ test.js \
   package.json package-lock.json node_modules/
 ```
 
